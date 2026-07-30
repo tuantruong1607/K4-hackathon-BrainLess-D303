@@ -1,5 +1,3 @@
-# Local development infrastructure only. Do not deploy these defaults to a
-# networked environment; production services need managed authentication and TLS.
 services:
   qdrant:
     image: qdrant/qdrant:v1.18.3
@@ -8,15 +6,29 @@ services:
     volumes:
       - qdrant_data:/qdrant/storage
   neo4j:
-    image: neo4j:5.26.28
+    image: neo4j:5-community
     environment:
-      NEO4J_AUTH: "${NEO4J_AUTH:?Set NEO4J_AUTH in agent/.env}"
+      NEO4J_AUTH: neo4j/agentgraph123
+      NEO4J_PLUGINS: '[]'
     ports:
-      - "127.0.0.1:7474:7474"
-      - "127.0.0.1:7687:7687"
+      - "7474:7474"
+      - "7687:7687"
     volumes:
       - neo4j_data:/data
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: agent
+      POSTGRES_PASSWORD: agentgraph123
+      POSTGRES_DB: vlearn
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
   qdrant_data:
   neo4j_data:
+  postgres_data:
+

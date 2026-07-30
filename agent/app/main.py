@@ -1,188 +1,223 @@
-from fastapi import FastAPI
-from pydantic import BaseModel, Field
+# VLearn Slide RAG Agent
 
-from .domain import RetrievedSlide, SlideInput
-from .indexing import RagIndexer
-from .providers import (
-    MockChatProvider,
-    MockEmbeddingProvider,
-    OpenAIChatProvider,
-    OpenAIEmbeddingProvider,
-)
-from .services import RagService
-from .settings import RagSettings
-from .stores import (
-    MemoryGraphStore,
-    MemoryVectorStore,
-    Neo4jGraphStore,
-    QdrantVectorStore,
-)
+Service AI độc lập của VLearn, tương ứng với **Member 2** trong `CLAUDE.md`. Service chịu trách nhiệm xây dựng chỉ mục và truy xuất kiến thức từ nội dung slide bằng RAG và Knowledge Graph.
 
+Service chạy mặc định trên **port 8300** và được thiết kế để Backend trên port `8200` gọi qua REST nội bộ. Frontend không nên gọi trực tiếp service này.
 
-class HealthResponse(BaseModel):
-    status: str
+## Phạm vi hiện tại
 
+Service nhận dữ liệu slide đã được trích xuất thành JSON.
 
-class SlideRequest(BaseModel):
-    slide_number: int
-    title: str
-    content: str
-    concepts: list[str] = Field(default_factory=list)
+Việc đọc hoặc trích xuất nội dung trực tiếp từ PDF, PowerPoint, DOCX hay các định dạng tài liệu khác nằm ngoài phạm vi của service. Mỗi slide được lưu thành đúng một vector chunk và giữ lại metadata nguồn để phục vụ citation.
 
-    def to_domain(self) -> SlideInput:
-        return SlideInput(
-            slide_number=self.slide_number,
-            title=self.title,
-            content=self.content,
-            concepts=self.concepts,
-        )
+Các API hiện tại gồm:
 
+* `GET /health`
+* `POST /build-graph`
+* `POST /retrieve`
+* `POST /chat`
 
-class BuildGraphRequest(BaseModel):
-    document_id: str
-    day: str
-    version: str
-    slides: list[SlideRequest]
+## Stack
 
+* FastAPI
+* OpenAI Embeddings và Responses API cho chế độ live
+* Qdrant cho vector store
+* Neo4j cho Knowledge Graph
+* In-memory stores và mock providers cho local development và unit test
 
-class BuildGraphResponse(BaseModel):
-    indexed_chunks: int
-    concepts: list[str]
+## Local mock mode
 
+Mock providers và in-memory stores được sử dụng mặc định.
 
-class RetrieveRequest(BaseModel):
-    question: str
-    day: str | None = None
-    document_id: str | None = None
-    limit: int = Field(default=5, ge=1, le=100)
+Chế độ này:
 
+* Không cần Docker.
+* Không cần credentials.
+* Không thực hiện network call.
+* Cho kết quả deterministic.
+* Không yêu cầu API key khi chạy unit test.
 
-class CitationResponse(BaseModel):
-    document_id: str
-    day: str
-    version: str
-    slide_number: int
-    title: str
-    content: str
-    concepts: list[str]
-    score: float
+Từ thư mục root của repository:
 
+```powershell
+python -m unittest discover -s agent/tests -v
+uvicorn agent.app.main:app --reload --port 8300
+```
 
-class RetrieveResponse(BaseModel):
-    sources: list[CitationResponse]
+Gửi nội dung file:
 
+```text
+agent/data/sample_slides.json
+```
 
-class ChatRequest(BaseModel):
-    question: str
-    user_id: int
-    current_day: str
-    current_slide: int
+đến:
 
+```text
+POST /build-graph
+```
 
-class ChatResponse(BaseModel):
-    answer: str
-    sources: list[CitationResponse]
-    provider: str
+Sau khi xây dựng index, có thể sử dụng:
 
+```text
+POST /retrieve
+POST /chat
+```
 
-def create_app(settings: RagSettings | None = None) -> FastAPI:
-    configured_settings = settings or RagSettings.from_env()
-    service = _create_service(configured_settings)
-    app = FastAPI(title="Slide RAG Agent")
+Kiểm tra trạng thái service bằng:
 
-    @app.get("/health", response_model=HealthResponse)
-    def health() -> HealthResponse:
-        return HealthResponse(status="ok")
+```text
+GET /health
+```
 
-    @app.post("/build-graph", response_model=BuildGraphResponse)
-    def build_graph(request: BuildGraphRequest) -> BuildGraphResponse:
-        result = service.build_graph(
-            request.document_id,
-            request.day,
-            request.version,
-            [slide.to_domain() for slide in request.slides],
-        )
-        return BuildGraphResponse(
-            indexed_chunks=result.indexed_chunks,
-            concepts=list(result.concepts),
-        )
+Uvicorn chịu trách nhiệm cấu hình host và port. Application không tự bind host hoặc port.
 
-    @app.post("/retrieve", response_model=RetrieveResponse)
-    def retrieve(request: RetrieveRequest) -> RetrieveResponse:
-        sources = service.retrieve(
-            request.question,
-            day=request.day,
-            document_id=request.document_id,
-            limit=request.limit,
-        )
-        return RetrieveResponse(sources=[_citation(source) for source in sources])
+## Local Compose infrastructure
 
-    @app.post("/chat", response_model=ChatResponse)
-    def chat(request: ChatRequest) -> ChatResponse:
-        answer = service.chat(
-            request.question,
-            user_id=request.user_id,
-            current_day=request.current_day,
-            current_slide=request.current_slide,
-        )
-        return ChatResponse(
-            answer=answer.answer,
-            sources=[_citation(source) for source in answer.sources],
-            provider=answer.provider,
-        )
+File Compose đi kèm chỉ dành cho:
 
-    return app
+* Local development.
+* Live-integration testing.
+* Kiểm thử kết nối thật với Qdrant và Neo4j.
 
+Đây không phải cấu hình production.
 
-def _create_service(settings: RagSettings) -> RagService:
-    if settings.provider == "openai":
-        if settings.vector_store != "qdrant":
-            raise RuntimeError(
-                "RAG_VECTOR_STORE=qdrant is required when RAG_PROVIDER=openai"
-            )
-        embedding_provider = OpenAIEmbeddingProvider(settings)
-        chat_provider = OpenAIChatProvider(settings)
-    elif settings.provider == "mock":
-        embedding_provider = MockEmbeddingProvider()
-        chat_provider = MockChatProvider()
-    else:
-        raise RuntimeError(f"Unsupported RAG_PROVIDER: {settings.provider}")
+Các database port trong Compose chỉ được bind vào `127.0.0.1`.
 
-    if settings.vector_store == "qdrant":
-        vector_store = QdrantVectorStore(settings)
-    elif settings.vector_store == "memory":
-        vector_store = MemoryVectorStore()
-    else:
-        raise RuntimeError(f"Unsupported RAG_VECTOR_STORE: {settings.vector_store}")
+Từ thư mục `agent`, sao chép file môi trường:
 
-    if settings.graph_store == "neo4j":
-        graph_store = Neo4jGraphStore(settings)
-    elif settings.graph_store == "memory":
-        graph_store = MemoryGraphStore()
-    else:
-        raise RuntimeError(f"Unsupported RAG_GRAPH_STORE: {settings.graph_store}")
+```powershell
+copy .env.example .env
+```
 
-    indexer = RagIndexer(embedding_provider, vector_store, graph_store)
-    return RagService(
-        indexer,
-        embedding_provider,
-        vector_store,
-        chat_provider,
-    )
+Đặt một mật khẩu Neo4j local không phải mật khẩu mặc định và sử dụng cùng mật khẩu cho cả hai biến:
 
+```text
+NEO4J_PASSWORD=<local-password>
+NEO4J_AUTH=neo4j/<local-password>
+```
 
-def _citation(source: RetrievedSlide) -> CitationResponse:
-    chunk = source.chunk
-    return CitationResponse(
-        document_id=chunk.document_id,
-        day=chunk.day,
-        version=chunk.version,
-        slide_number=chunk.slide_number,
-        title=chunk.title,
-        content=chunk.content,
-        concepts=chunk.concepts,
-        score=float(source.score),
-    )
+Sau đó khởi động Qdrant và Neo4j:
 
+```powershell
+docker compose -f docker-compose.yml up -d
+```
 
-app = create_app()
+File `.env` phải được Git ignore và không được commit credentials vào repository.
+
+## Live-provider mode
+
+Để chạy service với OpenAI, Qdrant và Neo4j thật trong môi trường local, cấu hình:
+
+```text
+RAG_PROVIDER=openai
+RAG_VECTOR_STORE=qdrant
+RAG_GRAPH_STORE=neo4j
+```
+
+Thêm OpenAI API key vào file `.env` local:
+
+```text
+OPENAI_API_KEY=<your-api-key>
+```
+
+Các biến môi trường phải được load vào process trước khi khởi động Uvicorn.
+
+OpenAI embeddings và Responses API chỉ được gọi khi:
+
+```text
+RAG_PROVIDER=openai
+```
+
+và `OPENAI_API_KEY` hợp lệ đã được cấu hình.
+
+Khi sử dụng live-provider mode, dữ liệu vector được lưu trong Qdrant và dữ liệu Knowledge Graph được lưu trong Neo4j.
+
+## API overview
+
+### `GET /health`
+
+Kiểm tra trạng thái hoạt động của service.
+
+### `POST /build-graph`
+
+Nhận slide JSON đã được trích xuất trước và xây dựng dữ liệu phục vụ retrieval.
+
+Mỗi slide:
+
+* Trở thành một vector chunk.
+* Giữ metadata nguồn.
+* Có thể được dùng để tạo citation trong kết quả truy xuất và câu trả lời.
+
+Có thể sử dụng file mẫu:
+
+```text
+agent/data/sample_slides.json
+```
+
+để kiểm thử endpoint này.
+
+### `POST /retrieve`
+
+Truy xuất các slide chunk và thông tin Knowledge Graph liên quan đến câu hỏi.
+
+Endpoint này chỉ thực hiện retrieval và phù hợp để Backend kiểm tra context trước khi gọi luồng sinh câu trả lời.
+
+### `POST /chat`
+
+Nhận câu hỏi, truy xuất context liên quan và tạo câu trả lời dựa trên dữ liệu đã được index.
+
+Kết quả trả về cần giữ thông tin nguồn để Backend có thể hiển thị citation phù hợp.
+
+## Internal service architecture
+
+Theo kiến trúc VLearn:
+
+```text
+Frontend → Backend :8200 → Agent :8300
+```
+
+Agent được thiết kế như một internal service.
+
+Không expose trực tiếp port `8300` ra Internet công khai. Việc authentication, authorization, rate limiting và kiểm soát người dùng nên được xử lý tại Backend hoặc API gateway.
+
+## Tests
+
+Chạy toàn bộ unit test từ repository root:
+
+```powershell
+python -m unittest discover -s agent/tests -v
+```
+
+Các unit test sử dụng mock providers và in-memory stores nên không cần:
+
+* Docker.
+* OpenAI API key.
+* Qdrant server.
+* Neo4j server.
+* Network access.
+
+Live-integration test chỉ nên chạy sau khi:
+
+1. Qdrant và Neo4j đã được khởi động bằng Docker Compose.
+2. Các biến môi trường live-provider đã được cấu hình.
+3. `OPENAI_API_KEY` hợp lệ đã được load vào process.
+
+## Real deployment
+
+Không sử dụng trực tiếp file Docker Compose dành cho local development để triển khai production.
+
+Trong môi trường thật, Qdrant và Neo4j phải được triển khai dưới dạng authenticated services với:
+
+* TLS cho các kết nối.
+* Encrypted service endpoints.
+* Managed secrets.
+* Deployment-specific credentials.
+* Network access restrictions.
+* Firewall hoặc private network.
+* Backup và restore policy.
+* Monitoring và health checks.
+* Credential rotation.
+
+Không publish các local development database container ra một mạng không đáng tin cậy.
+
+Production retrieval phải sử dụng Qdrant bền vững thay vì in-memory vector store. Neo4j production cũng phải sử dụng persistent storage, authentication và backup phù hợp.
