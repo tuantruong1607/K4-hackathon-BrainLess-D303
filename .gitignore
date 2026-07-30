@@ -12,3 +12,13 @@ Batch03-K4-AI-Product-Hackathon/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Agent (RAG / Graph AI service)
+agent/.venv/
+agent/__pycache__/
+agent/**/__pycache__/
+agent/.env
+agent/data/qdrant/
+agent/data/raw/*
+!agent/data/raw/.gitkeep
+agent/.pytest_cache/

@@ -1,0 +1,26 @@
+services:
+  neo4j:
+    image: neo4j:5-community
+    environment:
+      NEO4J_AUTH: neo4j/agentgraph123
+      NEO4J_PLUGINS: '[]'
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: agent
+      POSTGRES_PASSWORD: agentgraph123
+      POSTGRES_DB: vlearn
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  neo4j_data:
+  postgres_data:
