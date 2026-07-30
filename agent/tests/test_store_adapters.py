@@ -163,9 +163,13 @@ class RecordingNeo4jSession:
 class RecordingNeo4jDriver:
     def __init__(self, records=None) -> None:
         self.session_instance = RecordingNeo4jSession(records)
+        self.close_calls = 0
 
     def session(self):
         return self.session_instance
+
+    def close(self):
+        self.close_calls += 1
 
 
 def neo4j_store(driver: RecordingNeo4jDriver) -> Neo4jGraphStore:
@@ -236,3 +240,20 @@ def test_neo4j_snapshot_reconstructs_document_for_rollback() -> None:
     assert "OPTIONAL MATCH (slide)-[:MENTIONS]->(concept:Concept)" in query
     assert params == {"document_id": "deck"}
     assert snapshot == (chunk(),)
+
+
+def test_neo4j_close_is_idempotent_across_store_and_runtime_ownership() -> None:
+    from app.runtime import build_runtime
+    from app.settings import Settings
+
+    driver = RecordingNeo4jDriver()
+    store = neo4j_store(driver)
+    runtime = build_runtime(Settings(_env_file=None))
+    runtime.graph_store = store
+
+    store.close()
+    runtime.close()
+    store.close()
+    runtime.close()
+
+    assert driver.close_calls == 1

@@ -1,8 +1,5 @@
 from pathlib import Path
 
-from docx import Document as DocxDocument
-from pypdf import PdfReader
-
 from .domain import SlideInput
 
 TEXT_SUFFIXES = {".txt", ".md"}
@@ -35,6 +32,8 @@ def load_file(
     resolved_document_id = document_id or path.stem
     resolved_day = day or infer_day(path.name)
     if suffix == ".pdf":
+        from pypdf import PdfReader
+
         reader = PdfReader(str(path))
         return [
             SlideInput(
@@ -51,6 +50,8 @@ def load_file(
     if suffix in TEXT_SUFFIXES:
         content = path.read_text(encoding="utf-8").strip()
     else:
+        from docx import Document as DocxDocument
+
         document = DocxDocument(str(path))
         content = "\n".join(paragraph.text for paragraph in document.paragraphs).strip()
 

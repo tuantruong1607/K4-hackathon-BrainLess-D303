@@ -466,10 +466,6 @@ class Neo4jGraphStore:
                 for record in result
             ]
 
-    def close(self) -> None:
-        self._driver.close()
-
-
 def _cosine_similarity(
     first: Sequence[float],
     second: Sequence[float],
