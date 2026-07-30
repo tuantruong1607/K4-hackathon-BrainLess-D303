@@ -1,8 +1,48 @@
 from functools import lru_cache
+import re
+import unicodedata
 
 from neo4j import Driver, GraphDatabase
 
 from app.config import settings
+
+VIETNAMESE_STOP_WORDS = {
+    "ai",
+    "bao",
+    "cai",
+    "cho",
+    "co",
+    "cua",
+    "gi",
+    "hay",
+    "la",
+    "mot",
+    "nao",
+    "nhung",
+    "tai",
+    "the",
+    "thi",
+    "trong",
+    "va",
+    "ve",
+}
+
+
+def _search_terms(question: str) -> list[str]:
+    """Extract useful terms instead of matching the whole natural-language question."""
+    terms = re.findall(r"\w+", question.casefold(), flags=re.UNICODE)
+    useful_terms = [
+        term
+        for term in terms
+        if len(term) >= 2
+        and "".join(
+            character
+            for character in unicodedata.normalize("NFD", term.replace("đ", "d"))
+            if unicodedata.category(character) != "Mn"
+        )
+        not in VIETNAMESE_STOP_WORDS
+    ]
+    return list(dict.fromkeys(useful_terms))[:8]
 
 
 @lru_cache
@@ -67,17 +107,25 @@ def get_nodes_by_day(day: str, limit: int = 20) -> list[dict]:
         return [dict(record) for record in result]
 
 
-def find_nodes_by_keyword(keyword: str, limit: int = 5) -> list[dict]:
+def find_nodes_by_keyword(keyword: str, limit: int = 5, day: str | None = None) -> list[dict]:
+    terms = _search_terms(keyword)
+    if not terms:
+        return []
+
     with get_driver().session() as session:
         result = session.run(
             """
             MATCH (n:Concept)
-            WHERE toLower(n.name) CONTAINS toLower($keyword)
-               OR toLower(n.description) CONTAINS toLower($keyword)
+            WHERE ($day IS NULL OR n.day = $day)
+              AND any(term IN $terms WHERE
+                  toLower(n.name) CONTAINS term
+                  OR toLower(n.description) CONTAINS term
+              )
             RETURN n.name AS name, n.description AS description
             LIMIT $limit
             """,
-            keyword=keyword,
+            terms=terms,
+            day=day,
             limit=limit,
         )
         return [dict(record) for record in result]

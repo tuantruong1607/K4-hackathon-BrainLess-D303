@@ -13,7 +13,7 @@ class RetrievedContext:
 def retrieval_graph(question: str, day: str | None = None) -> RetrievedContext:
     slide_chunks = vector_store.search(question, day=day)
 
-    graph_nodes = neo4j_client.find_nodes_by_keyword(question)
+    graph_nodes = neo4j_client.find_nodes_by_keyword(question, day=day)
     related_nodes: list[dict] = []
     seen_names = {node["name"] for node in graph_nodes}
     for node in graph_nodes:
