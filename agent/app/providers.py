@@ -23,10 +23,8 @@ class MockEmbeddingProvider:
 
 class OpenAIEmbeddingProvider:
     def __init__(self, settings: RagSettings):
-        if not settings.openai_api_key:
-            raise RuntimeError("OPENAI_API_KEY is required when RAG_PROVIDER=openai")
-        self._api_key = settings.openai_api_key
-        self._model = settings.openai_embedding_model
+        self._api_key = settings.openai_api_key.get_secret_value()
+        self._model = settings.embedding_model
         self._client = None
 
     def embed(self, text: str) -> list[float]:
@@ -57,10 +55,8 @@ class DeterministicConceptExtractor:
 
 class OpenAIConceptExtractor:
     def __init__(self, settings: RagSettings):
-        if not settings.openai_api_key:
-            raise RuntimeError("OPENAI_API_KEY is required when RAG_PROVIDER=openai")
-        self._api_key = settings.openai_api_key
-        self._model = settings.openai_chat_model
+        self._api_key = settings.openai_api_key.get_secret_value()
+        self._model = settings.chat_model
         self._client = None
 
     def extract(self, slide: SlideInput) -> list[str]:

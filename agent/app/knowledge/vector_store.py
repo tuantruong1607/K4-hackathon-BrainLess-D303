@@ -1,15 +1,19 @@
-"""Compatibility facade over the canonical server-backed vector store."""
+"""Compatibility facade; the Runtime owns the canonical vector store."""
 
-from functools import lru_cache
-
+from app.errors import DependencyUnavailableError
 from app.knowledge.embedder import embed_text, embed_texts
-from app.settings import RagSettings
+from app.settings import Settings
 from app.stores import QdrantVectorStore, VectorRecord
 
 
-@lru_cache
-def _get_store() -> QdrantVectorStore:
-    return QdrantVectorStore(RagSettings.from_env())
+def _get_store(settings: Settings | None = None) -> QdrantVectorStore:
+    selected = settings or Settings()
+    selected.validate_runtime()
+    if selected.rag_vector_store != "qdrant":
+        raise DependencyUnavailableError(
+            "Legacy Qdrant facade is disabled unless RAG_VECTOR_STORE=qdrant"
+        )
+    return QdrantVectorStore(selected)
 
 
 def get_client():
@@ -17,19 +21,22 @@ def get_client():
 
 
 def ensure_collection() -> None:
-    """Collection creation is deferred until the first prepared vector defines its size."""
+    """Collection creation is deferred until a prepared vector defines its size."""
 
 
 def upsert_chunks(chunks) -> int:
     if not chunks:
         return 0
-    vectors = embed_texts([f"{chunk.title}\n\n{chunk.content}" for chunk in chunks])
+    vectors = embed_texts(
+        [f"{chunk.title}\n\n{chunk.content}" for chunk in chunks]
+    )
     by_document: dict[str, list[VectorRecord]] = {}
     for chunk, vector in zip(chunks, vectors):
-        by_document.setdefault(chunk.document_id, []).append(VectorRecord(chunk, vector))
-    store = _get_store()
+        by_document.setdefault(chunk.document_id, []).append(
+            VectorRecord(chunk, vector)
+        )
     for document_id, records in by_document.items():
-        store.replace_document(document_id, records)
+        _get_store().replace_document(document_id, records)
     return len(chunks)
 
 
@@ -39,11 +46,12 @@ def search(
     day: str | None = None,
     document_id: str | None = None,
 ) -> list[dict]:
-    hits = _get_store().search(
-        embed_text(query),
+    settings = Settings()
+    hits = _get_store(settings).search(
+        embed_text(query, settings=settings),
         day=day,
         document_id=document_id,
-        limit=top_k or 4,
+        limit=top_k or settings.retrieval_limit,
     )
     return [
         hit.chunk.to_dict()
@@ -59,7 +67,6 @@ def search(
 
 
 def get_chunks_by_day(day: str, limit: int = 20) -> list[dict]:
-    """Compatibility query using Qdrant scroll without creating embedded storage."""
     store = _get_store()
     if not store._collection_exists():
         return []

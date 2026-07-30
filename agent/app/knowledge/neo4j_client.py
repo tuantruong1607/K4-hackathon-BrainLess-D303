@@ -1,10 +1,10 @@
-from functools import lru_cache
 import re
 import unicodedata
 
 from neo4j import Driver, GraphDatabase
 
-from app.config import settings
+from app.errors import DependencyUnavailableError
+from app.settings import Settings
 
 VIETNAMESE_STOP_WORDS = {
     "ai",
@@ -45,11 +45,19 @@ def _search_terms(question: str) -> list[str]:
     return list(dict.fromkeys(useful_terms))[:8]
 
 
-@lru_cache
-def get_driver() -> Driver:
+def get_driver(settings: Settings | None = None) -> Driver:
+    selected = settings or Settings()
+    selected.validate_runtime()
+    if selected.rag_graph_store != "neo4j":
+        raise DependencyUnavailableError(
+            "Legacy Neo4j facade is disabled unless RAG_GRAPH_STORE=neo4j"
+        )
     return GraphDatabase.driver(
-        settings.neo4j_uri,
-        auth=(settings.neo4j_user, settings.neo4j_password),
+        selected.neo4j_uri,
+        auth=(
+            selected.neo4j_username,
+            selected.neo4j_password.get_secret_value(),
+        ),
     )
 
 
@@ -133,5 +141,4 @@ def find_nodes_by_keyword(keyword: str, limit: int = 5, day: str | None = None) 
 
 
 def close() -> None:
-    get_driver().close()
-    get_driver.cache_clear()
+    """Drivers are runtime-owned; this compatibility facade keeps none globally."""

@@ -1,14 +1,22 @@
-from functools import lru_cache
-
 from langchain_openai import ChatOpenAI
 
-from app.config import settings
+from app.errors import DependencyUnavailableError
+from app.settings import Settings
 
 
-@lru_cache
-def get_chat_model(temperature: float = 0.2) -> ChatOpenAI:
+def get_chat_model(
+    temperature: float = 0.2,
+    *,
+    settings: Settings | None = None,
+) -> ChatOpenAI:
+    selected = settings or Settings()
+    selected.validate_runtime()
+    if selected.rag_provider != "openai":
+        raise DependencyUnavailableError(
+            "Legacy ChatOpenAI facade is disabled for the mock runtime"
+        )
     return ChatOpenAI(
-        model=settings.chat_model,
-        api_key=settings.openai_api_key,
+        model=selected.chat_model,
+        api_key=selected.openai_api_key.get_secret_value(),
         temperature=temperature,
     )

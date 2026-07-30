@@ -371,7 +371,10 @@ class Neo4jGraphStore:
 
         self._driver = GraphDatabase.driver(
             settings.neo4j_uri,
-            auth=(settings.neo4j_username, settings.neo4j_password),
+            auth=(
+                settings.neo4j_username,
+                settings.neo4j_password.get_secret_value(),
+            ),
         )
 
     def snapshot_document(self, document_id: str) -> tuple[SlideChunk, ...]:
