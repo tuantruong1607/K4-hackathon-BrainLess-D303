@@ -14,6 +14,12 @@ class Chunk:
 
 def _split_text(text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
     """Split text near natural boundaries without an additional LangChain package."""
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be greater than zero")
+    if not 0 <= chunk_overlap < chunk_size:
+        raise ValueError(
+            "chunk_overlap must be greater than or equal to zero and less than chunk_size"
+        )
     if not text:
         return []
 
