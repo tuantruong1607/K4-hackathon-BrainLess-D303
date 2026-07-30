@@ -1,5 +1,5 @@
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
@@ -7,14 +7,14 @@ class RagSettings:
     provider: str = "mock"
     vector_store: str = "memory"
     graph_store: str = "memory"
-    openai_api_key: str | None = None
+    openai_api_key: str | None = field(default=None, repr=False)
     openai_embedding_model: str = "text-embedding-3-small"
     openai_chat_model: str = "gpt-5.6-sol"
     qdrant_url: str | None = None
     qdrant_collection: str = "slides"
     neo4j_uri: str | None = None
     neo4j_username: str | None = None
-    neo4j_password: str | None = None
+    neo4j_password: str | None = field(default=None, repr=False)
 
     @classmethod
     def from_env(cls) -> "RagSettings":
