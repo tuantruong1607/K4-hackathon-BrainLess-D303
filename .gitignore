@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.vite/
+*.local
+*.log
+
+# Hackathon source material is kept locally and is not required by the frontend.
+Batch03-K4-AI-Product-Hackathon/
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
