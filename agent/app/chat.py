@@ -144,3 +144,8 @@ class OpenAIChatProvider:
         if not isinstance(questions, list) or len(questions) != count:
             raise ValueError("OpenAI quiz response did not match the requested count")
         return questions
+
+    def close(self) -> None:
+        client, self._client = self._client, None
+        if client is not None and callable(getattr(client, "close", None)):
+            client.close()

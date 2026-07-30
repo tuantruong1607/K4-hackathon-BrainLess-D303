@@ -9,6 +9,7 @@ from app.api.schemas import (
     ChatResponse,
     EmbeddingRequest,
     EmbeddingResponse,
+    ErrorResponse,
     GenerateQuizRequest,
     GenerateQuizResponse,
     HealthResponse,
@@ -20,17 +21,43 @@ from app.runtime import Runtime, retrieval_payload
 
 router = APIRouter()
 
+DEPENDENCY_ERROR_RESPONSES = {
+    502: {
+        "model": ErrorResponse,
+        "description": "An upstream provider or store failed",
+    },
+    503: {
+        "model": ErrorResponse,
+        "description": "Configuration or a required dependency is unavailable",
+    },
+}
+RESOURCE_ERROR_RESPONSES = {
+    **DEPENDENCY_ERROR_RESPONSES,
+    409: {
+        "model": ErrorResponse,
+        "description": "Required index or user context is missing",
+    },
+}
+
 
 def runtime_from(request: Request) -> Runtime:
     return request.app.state.runtime
 
 
-@router.get("/health", response_model=HealthResponse)
+@router.get(
+    "/health",
+    response_model=HealthResponse,
+    responses=DEPENDENCY_ERROR_RESPONSES,
+)
 def health(request: Request) -> HealthResponse:
     return HealthResponse(**runtime_from(request).service.health())
 
 
-@router.post("/build-graph", response_model=BuildGraphResponse)
+@router.post(
+    "/build-graph",
+    response_model=BuildGraphResponse,
+    responses=DEPENDENCY_ERROR_RESPONSES,
+)
 def build_graph(
     payload: BuildGraphRequest, request: Request
 ) -> BuildGraphResponse:
@@ -46,7 +73,11 @@ def build_graph(
     )
 
 
-@router.post("/retrieve", response_model=RetrieveResponse)
+@router.post(
+    "/retrieve",
+    response_model=RetrieveResponse,
+    responses=RESOURCE_ERROR_RESPONSES,
+)
 def retrieve(
     payload: RetrieveRequest, request: Request
 ) -> RetrieveResponse:
@@ -59,7 +90,11 @@ def retrieve(
     return RetrieveResponse(**retrieval_payload(result))
 
 
-@router.post("/chat", response_model=ChatResponse)
+@router.post(
+    "/chat",
+    response_model=ChatResponse,
+    responses=RESOURCE_ERROR_RESPONSES,
+)
 def chat(payload: ChatRequest, request: Request) -> ChatResponse:
     result = runtime_from(request).service.chat(
         user_id=payload.user_id,
@@ -70,7 +105,11 @@ def chat(payload: ChatRequest, request: Request) -> ChatResponse:
     return ChatResponse(**result)
 
 
-@router.post("/generate-quiz", response_model=GenerateQuizResponse)
+@router.post(
+    "/generate-quiz",
+    response_model=GenerateQuizResponse,
+    responses=RESOURCE_ERROR_RESPONSES,
+)
 def generate_quiz(
     payload: GenerateQuizRequest, request: Request
 ) -> GenerateQuizResponse:
@@ -82,7 +121,11 @@ def generate_quiz(
     return GenerateQuizResponse(questions=questions)
 
 
-@router.post("/analyze-level", response_model=AnalyzeLevelResponse)
+@router.post(
+    "/analyze-level",
+    response_model=AnalyzeLevelResponse,
+    responses=RESOURCE_ERROR_RESPONSES,
+)
 def analyze_level(
     payload: AnalyzeLevelRequest, request: Request
 ) -> AnalyzeLevelResponse:
@@ -91,7 +134,11 @@ def analyze_level(
     )
 
 
-@router.post("/embedding", response_model=EmbeddingResponse)
+@router.post(
+    "/embedding",
+    response_model=EmbeddingResponse,
+    responses=DEPENDENCY_ERROR_RESPONSES,
+)
 def embedding(
     payload: EmbeddingRequest, request: Request
 ) -> EmbeddingResponse:

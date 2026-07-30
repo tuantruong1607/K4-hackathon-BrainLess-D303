@@ -35,6 +35,11 @@ class OpenAIEmbeddingProvider:
         response = self._client.embeddings.create(model=self._model, input=text)
         return list(response.data[0].embedding)
 
+    def close(self) -> None:
+        client, self._client = self._client, None
+        if client is not None and callable(getattr(client, "close", None)):
+            client.close()
+
 
 class DeterministicConceptExtractor:
     """Small offline extractor for tests and local development."""
@@ -79,3 +84,8 @@ class OpenAIConceptExtractor:
         ):
             raise ValueError("OpenAI concept extraction returned invalid JSON")
         return concepts
+
+    def close(self) -> None:
+        client, self._client = self._client, None
+        if client is not None and callable(getattr(client, "close", None)):
+            client.close()

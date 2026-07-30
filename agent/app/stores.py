@@ -199,6 +199,11 @@ class QdrantVectorStore:
         self._client = QdrantClient(url=settings.qdrant_url)
         self._collection = settings.qdrant_collection
 
+    def close(self) -> None:
+        client, self._client = self._client, None
+        if client is not None and callable(getattr(client, "close", None)):
+            client.close()
+
     def snapshot_document(self, document_id: str) -> tuple[VectorRecord, ...]:
         if not self._collection_exists():
             return ()
@@ -376,6 +381,11 @@ class Neo4jGraphStore:
                 settings.neo4j_password.get_secret_value(),
             ),
         )
+
+    def close(self) -> None:
+        driver, self._driver = self._driver, None
+        if driver is not None and callable(getattr(driver, "close", None)):
+            driver.close()
 
     def snapshot_document(self, document_id: str) -> tuple[SlideChunk, ...]:
         query = """

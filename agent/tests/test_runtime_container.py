@@ -6,7 +6,11 @@ from app.domain import GraphConcept, RetrievalResult, RetrievedSlide, SlideChunk
 from app.errors import DependencyUnavailableError, UpstreamDependencyError
 from app.graph.nodes.retrieval_graph import retrieval_graph
 from app.graph.nodes.database_query import UserContext
+from app.chat import OpenAIChatProvider
+from app.providers import OpenAIConceptExtractor, OpenAIEmbeddingProvider
 from app.settings import ConfigurationError, Settings
+from app.stores import Neo4jGraphStore, QdrantVectorStore
+from app.user_context import PostgresUserContextProvider
 
 
 def _runtime_module():
@@ -25,6 +29,62 @@ def test_mock_runtime_owns_offline_dependencies() -> None:
     assert runtime.indexer is not None
     assert runtime.retriever is not None
     assert runtime.workflow is not None
+
+
+def test_runtime_close_is_idempotent_and_releases_owned_live_resources() -> None:
+    runtime_module = _runtime_module()
+    closed: list[str] = []
+
+    class Closeable:
+        def __init__(self, name: str) -> None:
+            self.name = name
+
+        def close(self) -> None:
+            closed.append(self.name)
+
+    class Disposable:
+        def dispose(self) -> None:
+            closed.append("postgres")
+
+    settings = Settings(_env_file=None, openai_api_key="configured")
+    embedding = OpenAIEmbeddingProvider(settings)
+    embedding._client = Closeable("embedding")
+    concept = OpenAIConceptExtractor(settings)
+    concept._client = Closeable("concept")
+    chat = OpenAIChatProvider(settings)
+    chat._client = Closeable("chat")
+    vector = QdrantVectorStore.__new__(QdrantVectorStore)
+    vector._client = Closeable("qdrant")
+    graph = Neo4jGraphStore.__new__(Neo4jGraphStore)
+    graph._driver = Closeable("neo4j")
+    context = PostgresUserContextProvider.__new__(PostgresUserContextProvider)
+    context._engine = Disposable()
+
+    runtime = runtime_module.Runtime(
+        settings=settings,
+        embedding_provider=embedding,
+        concept_extractor=concept,
+        vector_store=vector,
+        graph_store=graph,
+        user_context_provider=context,
+        chat_provider=chat,
+        indexer=None,
+        retriever=None,
+        workflow=None,
+        service=None,
+    )
+
+    runtime.close()
+    runtime.close()
+
+    assert sorted(closed) == [
+        "chat",
+        "concept",
+        "embedding",
+        "neo4j",
+        "postgres",
+        "qdrant",
+    ]
 
 
 def test_invalid_live_runtime_fails_before_constructing_clients(monkeypatch) -> None:
@@ -50,6 +110,31 @@ def test_invalid_live_runtime_fails_before_constructing_clients(monkeypatch) -> 
     assert constructed is False
 
 
+def test_whitespace_openai_key_fails_before_constructing_clients(monkeypatch) -> None:
+    runtime_module = _runtime_module()
+    constructed = False
+
+    class UnexpectedOpenAI:
+        def __init__(self, settings):
+            nonlocal constructed
+            constructed = True
+
+    monkeypatch.setattr(
+        runtime_module, "OpenAIEmbeddingProvider", UnexpectedOpenAI
+    )
+
+    with pytest.raises(ConfigurationError, match="OPENAI_API_KEY"):
+        runtime_module.build_runtime(
+            Settings(
+                _env_file=None,
+                rag_provider="openai",
+                openai_api_key="   ",
+            )
+        )
+
+    assert constructed is False
+
+
 def test_missing_live_client_package_is_typed_dependency_unavailable(
     monkeypatch,
 ) -> None:
@@ -68,6 +153,24 @@ def test_missing_live_client_package_is_typed_dependency_unavailable(
 
     assert "secret" not in str(captured.value)
     assert "secret" not in repr(captured.value)
+
+
+def test_directory_loader_lazy_import_error_is_typed_and_sanitized(
+    monkeypatch,
+) -> None:
+    runtime_module = _runtime_module()
+    runtime = runtime_module.build_runtime(Settings(_env_file=None))
+
+    def fail(*args, **kwargs):
+        raise ImportError("document loader token=super-secret")
+
+    monkeypatch.setattr(runtime_module, "load_directory", fail)
+
+    with pytest.raises(DependencyUnavailableError) as captured:
+        runtime.service.build_directory()
+
+    assert "super-secret" not in str(captured.value)
+    assert "super-secret" not in repr(captured.value)
 
 
 def test_live_client_initialization_failure_is_typed_and_sanitized(

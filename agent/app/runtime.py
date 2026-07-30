@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -90,6 +90,8 @@ class AgentService:
             return operation(*args, **kwargs)
         except AgentError:
             raise
+        except (ImportError, ModuleNotFoundError) as error:
+            raise DependencyUnavailableError() from error
         except Exception as error:
             raise UpstreamDependencyError() from error
 
@@ -118,7 +120,10 @@ class AgentService:
         )
 
     def build_directory(self, data_dir: Path | None = None) -> list[dict[str, Any]]:
-        slides = load_directory(data_dir or self.settings.resolved_rag_data_dir)
+        slides = self._upstream_call(
+            load_directory,
+            data_dir or self.settings.resolved_rag_data_dir,
+        )
         documents: dict[tuple[str, str, str], list[SlideInput]] = {}
         for slide in slides:
             documents.setdefault(
@@ -229,6 +234,30 @@ class Runtime:
     retriever: HybridRetriever
     workflow: Any
     service: AgentService
+    _closed: bool = field(default=False, init=False, repr=False)
+
+    def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        errors: list[Exception] = []
+        for component in (
+            self.chat_provider,
+            self.concept_extractor,
+            self.embedding_provider,
+            self.user_context_provider,
+            self.graph_store,
+            self.vector_store,
+        ):
+            close = getattr(component, "close", None)
+            if not callable(close):
+                continue
+            try:
+                close()
+            except Exception as error:
+                errors.append(error)
+        if errors:
+            raise UpstreamDependencyError() from errors[0]
 
 
 def _construct_dependency(factory, *args):

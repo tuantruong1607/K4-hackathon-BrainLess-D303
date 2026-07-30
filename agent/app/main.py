@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
@@ -13,7 +15,18 @@ def create_app(
     runtime: Runtime | None = None,
 ) -> FastAPI:
     selected_runtime = runtime or build_runtime(settings)
-    application = FastAPI(title="VLearn Agent Graph (RAG)")
+
+    @asynccontextmanager
+    async def lifespan(application: FastAPI):
+        try:
+            yield
+        finally:
+            selected_runtime.close()
+
+    application = FastAPI(
+        title="VLearn Agent Graph (RAG)",
+        lifespan=lifespan,
+    )
     application.state.runtime = selected_runtime
     application.include_router(router)
 

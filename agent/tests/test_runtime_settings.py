@@ -63,3 +63,55 @@ def test_live_combinations_raise_typed_configuration_error(
 
     with pytest.raises(configuration_error, match=missing_name):
         settings.validate_runtime()
+
+
+@pytest.mark.parametrize(
+    ("overrides", "missing_name"),
+    [
+        ({"rag_provider": "openai", "openai_api_key": " \t "}, "OPENAI_API_KEY"),
+        (
+            {"rag_graph_store": "neo4j", "neo4j_password": "\n "},
+            "NEO4J_PASSWORD",
+        ),
+        (
+            {"user_context_provider": "postgres", "database_url": "   "},
+            "DATABASE_URL",
+        ),
+    ],
+)
+def test_live_secret_values_reject_whitespace_only(
+    overrides: dict[str, str], missing_name: str
+) -> None:
+    settings = _settings(**overrides)
+
+    with pytest.raises(settings_module.ConfigurationError, match=missing_name):
+        settings.validate_runtime()
+
+
+def test_live_connection_values_are_stripped_before_clients_receive_them() -> None:
+    settings = _settings(
+        rag_provider="openai",
+        rag_vector_store="qdrant",
+        rag_graph_store="neo4j",
+        user_context_provider="postgres",
+        openai_api_key="  sk-value  ",
+        qdrant_url="  http://qdrant:6333  ",
+        qdrant_collection="  course-slides  ",
+        neo4j_uri="  bolt://neo4j:7687  ",
+        neo4j_username="  readonly  ",
+        neo4j_password="  graph-secret  ",
+        database_url="  postgresql://readonly:secret@db/course  ",
+    )
+
+    settings.validate_runtime()
+
+    assert settings.openai_api_key.get_secret_value() == "sk-value"
+    assert settings.qdrant_url == "http://qdrant:6333"
+    assert settings.qdrant_collection == "course-slides"
+    assert settings.neo4j_uri == "bolt://neo4j:7687"
+    assert settings.neo4j_username == "readonly"
+    assert settings.neo4j_password.get_secret_value() == "graph-secret"
+    assert (
+        settings.database_url.get_secret_value()
+        == "postgresql://readonly:secret@db/course"
+    )

@@ -1,6 +1,10 @@
 from pydantic import BaseModel, Field
 
 
+class ErrorResponse(BaseModel):
+    detail: str
+
+
 class SlidePayload(BaseModel):
     slide_number: int = Field(ge=1)
     title: str = Field(min_length=1)

@@ -97,6 +97,20 @@ def test_mock_runtime_supports_the_full_typed_api_without_network() -> None:
     assert len(embedding.json()["embedding"]) == 32
 
 
+def test_fastapi_lifespan_closes_the_injected_runtime() -> None:
+    runtime_module = importlib.import_module("app.runtime")
+    main_module = importlib.import_module("app.main")
+    runtime = runtime_module.build_runtime(Settings(_env_file=None))
+    closed: list[bool] = []
+    runtime.close = lambda: closed.append(True)
+
+    with TestClient(main_module.create_app(runtime=runtime)) as client:
+        assert client.get("/health").status_code == 200
+        assert closed == []
+
+    assert closed == [True]
+
+
 def test_build_graph_requires_a_typed_body_and_valid_slide_number() -> None:
     client, _ = _client()
 
@@ -133,6 +147,21 @@ def test_raw_upstream_errors_are_502_and_sanitized(monkeypatch) -> None:
     assert "super-secret" not in response.text
 
 
+def test_lazy_dependency_import_errors_are_503_and_sanitized(monkeypatch) -> None:
+    client, runtime = _client()
+
+    def fail(*args, **kwargs):
+        raise ModuleNotFoundError("optional package path with token=super-secret")
+
+    monkeypatch.setattr(runtime.retriever, "retrieve", fail)
+
+    response = client.post("/retrieve", json={"question": "What is JTBD?"})
+
+    assert response.status_code == 503
+    assert response.json()["detail"] == "Required dependency is unavailable"
+    assert "super-secret" not in response.text
+
+
 @pytest.mark.parametrize(
     "error",
     [
@@ -154,3 +183,37 @@ def test_configuration_and_unavailable_dependencies_are_503(
 
     assert response.status_code == 503
     assert "OPENAI_API_KEY" not in response.text
+
+
+def test_openapi_declares_typed_error_responses_on_relevant_routes() -> None:
+    runtime_module = importlib.import_module("app.runtime")
+    main_module = importlib.import_module("app.main")
+    runtime = runtime_module.build_runtime(Settings(_env_file=None))
+
+    openapi = main_module.create_app(runtime=runtime).openapi()
+
+    expected_statuses = {
+        "/health": {"502", "503"},
+        "/build-graph": {"502", "503"},
+        "/retrieve": {"409", "502", "503"},
+        "/chat": {"409", "502", "503"},
+        "/generate-quiz": {"409", "502", "503"},
+        "/analyze-level": {"409", "502", "503"},
+        "/embedding": {"502", "503"},
+    }
+    for path, statuses in expected_statuses.items():
+        method = "get" if path == "/health" else "post"
+        responses = openapi["paths"][path][method]["responses"]
+        for status in statuses:
+            assert responses[status]["content"]["application/json"]["schema"] == {
+                "$ref": "#/components/schemas/ErrorResponse"
+            }
+
+    assert openapi["components"]["schemas"]["ErrorResponse"] == {
+        "properties": {
+            "detail": {"title": "Detail", "type": "string"},
+        },
+        "required": ["detail"],
+        "title": "ErrorResponse",
+        "type": "object",
+    }

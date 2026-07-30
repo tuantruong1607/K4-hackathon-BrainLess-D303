@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .errors import ConfigurationError
@@ -41,11 +41,34 @@ class Settings(BaseSettings):
     rag_data_dir: Path = Path("agent/data/raw")
     retrieval_limit: int = Field(default=5, ge=1, le=100)
 
+    @field_validator(
+        "qdrant_url",
+        "qdrant_collection",
+        "neo4j_uri",
+        "neo4j_username",
+        mode="before",
+    )
+    @classmethod
+    def strip_live_text_values(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator(
+        "openai_api_key",
+        "neo4j_password",
+        "database_url",
+        mode="before",
+    )
+    @classmethod
+    def strip_live_secret_values(cls, value):
+        if isinstance(value, SecretStr):
+            return SecretStr(value.get_secret_value().strip())
+        return value.strip() if isinstance(value, str) else value
+
     def validate_runtime(self) -> None:
         required: list[tuple[bool, str]] = [
             (
                 self.rag_provider == "openai"
-                and not self.openai_api_key.get_secret_value(),
+                and not self.openai_api_key.get_secret_value().strip(),
                 "OPENAI_API_KEY",
             ),
             (
@@ -68,12 +91,12 @@ class Settings(BaseSettings):
             ),
             (
                 self.rag_graph_store == "neo4j"
-                and not self.neo4j_password.get_secret_value(),
+                and not self.neo4j_password.get_secret_value().strip(),
                 "NEO4J_PASSWORD",
             ),
             (
                 self.user_context_provider == "postgres"
-                and not self.database_url.get_secret_value(),
+                and not self.database_url.get_secret_value().strip(),
                 "DATABASE_URL",
             ),
         ]
