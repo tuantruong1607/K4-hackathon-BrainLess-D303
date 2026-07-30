@@ -1,6 +1,7 @@
 import unittest
+from typing import get_type_hints
 
-from agent.app.domain import SlideInput
+from agent.app.domain import RetrievedSlide, SlideInput
 from agent.app.indexing import RagIndexer
 from agent.app.providers import MockChatProvider, MockEmbeddingProvider
 from agent.app.services import RagService
@@ -8,6 +9,9 @@ from agent.app.stores import MemoryGraphStore, MemoryVectorStore
 
 
 class RagServiceTests(unittest.TestCase):
+    def test_retrieved_slide_score_contract_is_float(self):
+        self.assertIs(float, get_type_hints(RetrievedSlide)["score"])
+
     def setUp(self):
         self.embedding_provider = MockEmbeddingProvider()
         self.vector_store = MemoryVectorStore()

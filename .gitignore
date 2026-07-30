@@ -3,6 +3,9 @@ dist/
 .vite/
 .worktrees/
 *.local
+agent/.env
+agent/.venv/
+agent/**/__pycache__/
 *.log
 
 # Hackathon source material is kept locally and is not required by the frontend.

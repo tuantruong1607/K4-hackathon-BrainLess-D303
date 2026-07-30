@@ -27,4 +27,4 @@ class SlideChunk:
 @dataclass
 class RetrievedSlide:
     chunk: SlideChunk
-    score: int
+    score: float
