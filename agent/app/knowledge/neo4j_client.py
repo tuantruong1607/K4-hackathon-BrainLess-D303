@@ -53,6 +53,20 @@ def get_related(name: str, limit: int = 5) -> list[dict]:
         return [dict(record) for record in result]
 
 
+def get_nodes_by_day(day: str, limit: int = 20) -> list[dict]:
+    with get_driver().session() as session:
+        result = session.run(
+            """
+            MATCH (n:Concept {day: $day})
+            RETURN n.name AS name, n.description AS description
+            LIMIT $limit
+            """,
+            day=day,
+            limit=limit,
+        )
+        return [dict(record) for record in result]
+
+
 def find_nodes_by_keyword(keyword: str, limit: int = 5) -> list[dict]:
     with get_driver().session() as session:
         result = session.run(

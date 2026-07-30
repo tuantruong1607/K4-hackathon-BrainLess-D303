@@ -53,6 +53,17 @@ def upsert_chunks(chunks: list[Chunk]) -> int:
     return len(points)
 
 
+def get_chunks_by_day(day: str, limit: int = 20) -> list[dict]:
+    ensure_collection()
+    query_filter = Filter(must=[FieldCondition(key="day", match=MatchValue(value=day))])
+    points, _ = get_client().scroll(
+        collection_name=settings.qdrant_collection,
+        scroll_filter=query_filter,
+        limit=limit,
+    )
+    return [point.payload for point in points]
+
+
 def search(query: str, top_k: int | None = None, day: str | None = None) -> list[dict]:
     ensure_collection()
     query_vector = embed_text(query)
