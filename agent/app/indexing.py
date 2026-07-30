@@ -33,8 +33,14 @@ class RagIndexer:
         if not slides:
             return IndexResult(0, ())
         document_id = slides[0].document_id
-        if any(slide.document_id != document_id for slide in slides):
-            raise ValueError("one index operation must contain exactly one document_id")
+        version = slides[0].version
+        if any(
+            slide.document_id != document_id or slide.version != version
+            for slide in slides
+        ):
+            raise ValueError(
+                "one index operation must contain exactly one document_id and version"
+            )
 
         chunks: list[SlideChunk] = []
         records: list[VectorRecord] = []
@@ -60,6 +66,24 @@ class RagIndexer:
             records.append(VectorRecord(chunk, vector))
             concepts.update(chunk.concepts)
 
-        self._vector_store.replace_document(document_id, records)
-        self._graph_store.replace_document(document_id, chunks)
+        vector_snapshot = self._vector_store.snapshot_document(document_id)
+        graph_snapshot = self._graph_store.snapshot_document(document_id)
+        try:
+            self._vector_store.replace_document(document_id, records)
+            self._graph_store.replace_document(document_id, chunks)
+        except Exception as commit_error:
+            rollback_errors: list[Exception] = []
+            try:
+                self._graph_store.restore_document(document_id, graph_snapshot)
+            except Exception as rollback_error:
+                rollback_errors.append(rollback_error)
+            try:
+                self._vector_store.restore_document(document_id, vector_snapshot)
+            except Exception as rollback_error:
+                rollback_errors.append(rollback_error)
+            if rollback_errors:
+                raise RuntimeError(
+                    "RAG commit failed and rollback could not restore all stores"
+                ) from commit_error
+            raise
         return IndexResult(len(chunks), tuple(sorted(concepts)))

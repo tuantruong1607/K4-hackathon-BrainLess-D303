@@ -14,6 +14,12 @@ class VectorRecord:
 
 
 class VectorStore(Protocol):
+    def snapshot_document(self, document_id: str) -> tuple[VectorRecord, ...]: ...
+
+    def restore_document(
+        self, document_id: str, snapshot: Sequence[VectorRecord]
+    ) -> None: ...
+
     def replace_document(
         self, document_id: str, records: Sequence[VectorRecord]
     ) -> None: ...
@@ -29,6 +35,12 @@ class VectorStore(Protocol):
 
 
 class GraphStore(Protocol):
+    def snapshot_document(self, document_id: str) -> tuple[SlideChunk, ...]: ...
+
+    def restore_document(
+        self, document_id: str, snapshot: Sequence[SlideChunk]
+    ) -> None: ...
+
     def replace_document(
         self, document_id: str, chunks: Sequence[SlideChunk]
     ) -> None: ...
@@ -50,6 +62,18 @@ class MemoryVectorStore:
     @property
     def count(self) -> int:
         return len(self.vectors)
+
+    def snapshot_document(self, document_id: str) -> tuple[VectorRecord, ...]:
+        return tuple(
+            VectorRecord(chunk, tuple(self.vectors[chunk_id]))
+            for chunk_id, chunk in sorted(self.chunks.items())
+            if chunk.document_id == document_id
+        )
+
+    def restore_document(
+        self, document_id: str, snapshot: Sequence[VectorRecord]
+    ) -> None:
+        self.replace_document(document_id, snapshot)
 
     def replace_document(
         self, document_id: str, records: Sequence[VectorRecord]
@@ -105,6 +129,18 @@ class MemoryGraphStore:
     @property
     def concepts(self) -> set[str]:
         return set(self.mentions)
+
+    def snapshot_document(self, document_id: str) -> tuple[SlideChunk, ...]:
+        return tuple(
+            chunk
+            for _, chunk in sorted(self.slides.items())
+            if chunk.document_id == document_id
+        )
+
+    def restore_document(
+        self, document_id: str, snapshot: Sequence[SlideChunk]
+    ) -> None:
+        self.replace_document(document_id, snapshot)
 
     def replace_document(
         self, document_id: str, chunks: Sequence[SlideChunk]
@@ -163,6 +199,49 @@ class QdrantVectorStore:
         self._client = QdrantClient(url=settings.qdrant_url)
         self._collection = settings.qdrant_collection
 
+    def snapshot_document(self, document_id: str) -> tuple[VectorRecord, ...]:
+        if not self._collection_exists():
+            return ()
+
+        from qdrant_client.models import FieldCondition, Filter, MatchValue
+
+        document_filter = Filter(
+            must=[
+                FieldCondition(
+                    key="document_id",
+                    match=MatchValue(value=document_id),
+                )
+            ]
+        )
+        records: list[VectorRecord] = []
+        offset = None
+        while True:
+            points, offset = self._client.scroll(
+                collection_name=self._collection,
+                scroll_filter=document_filter,
+                limit=256,
+                offset=offset,
+                with_payload=True,
+                with_vectors=True,
+            )
+            for point in points:
+                if not isinstance(point.vector, list):
+                    raise ValueError("Qdrant snapshot requires an unnamed dense vector")
+                records.append(
+                    VectorRecord(
+                        SlideChunk.from_dict(dict(point.payload or {})),
+                        tuple(float(value) for value in point.vector),
+                    )
+                )
+            if offset is None:
+                break
+        return tuple(records)
+
+    def restore_document(
+        self, document_id: str, snapshot: Sequence[VectorRecord]
+    ) -> None:
+        self.replace_document(document_id, snapshot)
+
     def replace_document(
         self, document_id: str, records: Sequence[VectorRecord]
     ) -> None:
@@ -183,6 +262,7 @@ class QdrantVectorStore:
             PointsList,
             PointStruct,
             UpsertOperation,
+            WriteOrdering,
         )
 
         document_filter = Filter(
@@ -215,6 +295,7 @@ class QdrantVectorStore:
             collection_name=self._collection,
             update_operations=operations,
             wait=True,
+            ordering=WriteOrdering.STRONG,
         )
 
     def search(
@@ -293,14 +374,44 @@ class Neo4jGraphStore:
             auth=(settings.neo4j_username, settings.neo4j_password),
         )
 
+    def snapshot_document(self, document_id: str) -> tuple[SlideChunk, ...]:
+        query = """
+        MATCH (slide:Slide {document_id: $document_id})
+        OPTIONAL MATCH (slide)-[:MENTIONS]->(concept:Concept)
+        RETURN slide.document_id AS document_id, slide.day AS day,
+               slide.version AS version, slide.slide_number AS slide_number,
+               slide.title AS title, slide.content AS content,
+               collect(concept.name) AS concepts
+        ORDER BY slide.slide_number
+        """
+        with self._driver.session() as session:
+            return tuple(
+                SlideChunk(
+                    document_id=record["document_id"],
+                    day=record["day"],
+                    version=record["version"],
+                    slide_number=record["slide_number"],
+                    title=record["title"],
+                    content=record["content"],
+                    concepts=list(record["concepts"]),
+                )
+                for record in session.run(query, document_id=document_id)
+            )
+
+    def restore_document(
+        self, document_id: str, snapshot: Sequence[SlideChunk]
+    ) -> None:
+        self.replace_document(document_id, snapshot)
+
     def replace_document(
         self, document_id: str, chunks: Sequence[SlideChunk]
     ) -> None:
         rows = [chunk.to_dict() | {"id": chunk.id} for chunk in chunks]
         query = """
         OPTIONAL MATCH (old:Slide {document_id: $document_id})
-        DETACH DELETE old
-        WITH $slides AS slide_rows
+        WITH collect(old) AS old_slides, $slides AS slide_rows
+        FOREACH (old IN old_slides | DETACH DELETE old)
+        WITH slide_rows
         UNWIND slide_rows AS data
         CREATE (slide:Slide {
             id: data.id, document_id: data.document_id, day: data.day,
@@ -309,8 +420,7 @@ class Neo4jGraphStore:
         })
         FOREACH (concept_name IN data.concepts |
             MERGE (concept:Concept {name: concept_name})
-            MERGE (slide)-[mentions:MENTIONS]->(concept)
-            SET mentions.day = data.day, mentions.version = data.version
+            MERGE (slide)-[:MENTIONS]->(concept)
         )
         """
         with self._driver.session() as session:

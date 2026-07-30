@@ -171,6 +171,61 @@ def test_preparation_failure_leaves_previous_document_active() -> None:
     assert set(graphs.slides) == {"deck:v1:1"}
 
 
+def test_index_rejects_mixed_versions_before_touching_stores() -> None:
+    vectors = MemoryVectorStore()
+    graphs = MemoryGraphStore()
+    indexer = RagIndexer(
+        RecordingEmbeddingProvider([[1.0], [1.0]]),
+        vectors,
+        graphs,
+        DeterministicConceptExtractor(),
+    )
+
+    with pytest.raises(ValueError, match="one document_id and version"):
+        indexer.index(
+            [
+                slide(version="v1", slide_number=1, concepts=["One"]),
+                slide(version="v2", slide_number=2, concepts=["Two"]),
+            ]
+        )
+
+    assert vectors.count == 0
+    assert graphs.slides == {}
+
+
+def test_graph_commit_failure_rolls_vector_and_graph_back_to_prior_document() -> None:
+    class FailNextGraphReplace(MemoryGraphStore):
+        fail_next = False
+
+        def replace_document(self, document_id, chunks):
+            if self.fail_next:
+                self.fail_next = False
+                raise RuntimeError("graph commit failed")
+            super().replace_document(document_id, chunks)
+
+    vectors = MemoryVectorStore()
+    graphs = FailNextGraphReplace()
+    RagIndexer(
+        RecordingEmbeddingProvider([[1.0]]),
+        vectors,
+        graphs,
+        DeterministicConceptExtractor(),
+    ).index([slide(version="v1", concepts=["Old"])])
+    graphs.fail_next = True
+
+    with pytest.raises(RuntimeError, match="graph commit failed"):
+        RagIndexer(
+            RecordingEmbeddingProvider([[0.0, 1.0]]),
+            vectors,
+            graphs,
+            DeterministicConceptExtractor(),
+        ).index([slide(version="v2", concepts=["New"])])
+
+    assert set(vectors.chunks) == {"deck:v1:1"}
+    assert set(graphs.slides) == {"deck:v1:1"}
+    assert graphs.concepts == {"Old"}
+
+
 def test_memory_search_filters_day_and_document_and_returns_score_and_full_citation() -> None:
     store = MemoryVectorStore()
     chunks = [
