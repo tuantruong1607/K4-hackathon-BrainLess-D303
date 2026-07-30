@@ -111,7 +111,7 @@ Run: `python -m unittest agent.tests.test_indexing -v`
 
 **Interfaces:**
 - `RagService.build_graph(request)` indexes each submitted slide once.
-- `RagService.retrieve(question, day=None, document_id=None, limit=5)` returns ranked cited slides.
+- `RagService.retrieve(question, day=None, document_id=None, limit=5)` embeds the question, queries the configured vector store, and returns ranked cited slides.
 - `RagService.chat(question, user_id, current_day, current_slide)` returns `{answer, sources, provider}`; `MockChatProvider` never calls a network.
 - HTTP endpoints: `GET /health`, `POST /build-graph`, `POST /retrieve`, and `POST /chat`.
 
@@ -128,7 +128,7 @@ assert "Push" in answer.answer
 
 Run: `python -m unittest agent.tests.test_services -v`
 
-- [ ] **Step 3: Implement the service, FastAPI request/response models, routes, sample JTBD slides, and run instructions**
+- [ ] **Step 3: Implement vector-store search for memory and Qdrant (including Qdrant collection creation), then add the service, FastAPI request/response models, routes, sample JTBD slides, and run instructions**
 
 ```python
 @app.post("/retrieve")
@@ -145,7 +145,7 @@ Run: `python -m compileall -q agent/app`
 ## Test Plan
 
 - Verify a three-slide payload yields exactly three chunks and preserves slide numbers.
-- Verify retrieval chooses a slide containing the query concept, restricts results to `day`, and returns source metadata.
+- Verify retrieval chooses a slide containing the query concept, restricts results to `day`, and returns source metadata through the configured vector store.
 - Verify indexing writes one vector per slide and de-duplicates concept nodes.
 - Verify mock chat includes retrieved slide evidence and never needs `OPENAI_API_KEY`.
 - Do not run a live OpenAI smoke test until collaborators supply a key in an ignored `agent/.env` file.
