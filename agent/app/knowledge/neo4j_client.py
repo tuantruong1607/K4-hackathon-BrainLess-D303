@@ -58,11 +58,10 @@ def upsert_node(name: str, description: str, day: str | None = None) -> None:
         session.run(
             """
             MERGE (n:Concept {name: $name})
-            SET n.description = $description, n.day = coalesce($day, n.day)
+            SET n.description = $description
             """,
             name=name,
             description=description,
-            day=day,
         )
 
 
@@ -97,8 +96,8 @@ def get_nodes_by_day(day: str, limit: int = 20) -> list[dict]:
     with get_driver().session() as session:
         result = session.run(
             """
-            MATCH (n:Concept {day: $day})
-            RETURN n.name AS name, n.description AS description
+            MATCH (slide:Slide {day: $day})-[:MENTIONS]->(n:Concept)
+            RETURN DISTINCT n.name AS name, n.description AS description
             LIMIT $limit
             """,
             day=day,
@@ -116,7 +115,9 @@ def find_nodes_by_keyword(keyword: str, limit: int = 5, day: str | None = None) 
         result = session.run(
             """
             MATCH (n:Concept)
-            WHERE ($day IS NULL OR n.day = $day)
+            WHERE ($day IS NULL OR EXISTS {
+                    MATCH (:Slide {day: $day})-[:MENTIONS]->(n)
+                  })
               AND any(term IN $terms WHERE
                   toLower(n.name) CONTAINS term
                   OR toLower(n.description) CONTAINS term

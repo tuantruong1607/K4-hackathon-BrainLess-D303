@@ -24,11 +24,11 @@ class RagIndexerTests(unittest.TestCase):
         graphs = MemoryGraphStore()
         indexer = RagIndexer(MockEmbeddingProvider(), vectors, graphs)
         slides = [
-            SlideInput(1, "Pull", "Pull-based learning", ["Pull", "Push"]),
-            SlideInput(2, "Push", "Push-based learning", ["Push"]),
+            SlideInput("jtbd-day-01", "v1", "day01", 1, "Pull", "Pull-based learning", ["Pull", "Push"]),
+            SlideInput("jtbd-day-01", "v1", "day01", 2, "Push", "Push-based learning", ["Push"]),
         ]
 
-        result = indexer.index("jtbd-day-01", "day01", "v1", slides)
+        result = indexer.index(slides)
 
         self.assertEqual(2, result.indexed_chunks)
         self.assertEqual(("Pull", "Push"), result.concepts)
