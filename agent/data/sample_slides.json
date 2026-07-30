@@ -1,0 +1,25 @@
+{
+  "document_id": "jtbd-day-01",
+  "day": "day01",
+  "version": "v1",
+  "slides": [
+    {
+      "slide_number": 1,
+      "title": "Jobs To Be Done",
+      "content": "Customers hire products and services to make progress in a specific situation.",
+      "concepts": ["JTBD", "Progress"]
+    },
+    {
+      "slide_number": 2,
+      "title": "Customer interviews",
+      "content": "Interview customers about their situation, struggle, and desired progress.",
+      "concepts": ["Interview", "Situation"]
+    },
+    {
+      "slide_number": 3,
+      "title": "Push and Pull",
+      "content": "Push forces move customers away from the current solution. Pull forces attract customers toward a new solution.",
+      "concepts": ["Push", "Pull"]
+    }
+  ]
+}
