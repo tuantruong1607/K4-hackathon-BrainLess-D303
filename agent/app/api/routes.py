@@ -10,6 +10,7 @@ from app.api.schemas import (
     EmbeddingResponse,
     GenerateQuizRequest,
     GenerateQuizResponse,
+    QuestionOut,
     RetrieveRequest,
     RetrieveResponse,
 )
@@ -54,7 +55,7 @@ def generate_quiz(request: GenerateQuizRequest) -> GenerateQuizResponse:
     questions = _wrap_upstream_errors(
         generate_questions, request.day, request.difficulty, request.count
     )
-    return GenerateQuizResponse(questions=questions)
+    return GenerateQuizResponse(questions=[QuestionOut(**q.model_dump()) for q in questions])
 
 
 @router.post("/build-graph", response_model=BuildGraphResponse)
