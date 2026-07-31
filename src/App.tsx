@@ -49,6 +49,25 @@ type Day = {
   pdfUrl: string;
 };
 
+const COURSE_SLIDES: Day[] = [
+  {
+    key: "day01",
+    label: "Ngày 01",
+    title: "AI & LLM Foundation",
+    status: "active",
+    pdfUrl:
+      "https://gimnlxrzpzpfbpiuobez.supabase.co/storage/v1/object/public/slides/d1-slide-hackathon.pdf",
+  },
+  {
+    key: "day02",
+    label: "Ngày 02",
+    title: "Xác định bài toán cho AI",
+    status: "active",
+    pdfUrl:
+      "https://gimnlxrzpzpfbpiuobez.supabase.co/storage/v1/object/public/slides/d2-slide-hackathon.pdf",
+  },
+];
+
 type ChatMessage = {
   id: number;
   role: "assistant" | "user";
@@ -75,9 +94,11 @@ function App() {
   const [numPages, setNumPages] = useState<number>(0);
   const [playing, setPlaying] = useState(false);
   const [quizEnabled, setQuizEnabled] = useState(false);
+  const [quizModeActive, setQuizModeActive] = useState(false);
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
   const slideRef = useRef<HTMLDivElement>(null);
   const pdfViewerRef = useRef<HTMLDivElement>(null);
+  const paginationRef = useRef<HTMLDivElement>(null);
   const [pdfPageWidth, setPdfPageWidth] = useState(700);
 
   useLayoutEffect(() => {
@@ -115,44 +136,27 @@ function App() {
     const fetchSlides = async () => {
       try {
         const res = await apiFetch<any[]>("/slides", { signal: abortController.signal });
-        if (res.data && res.data.length > 0) {
-          const mapped = res.data.map((item: any, index: number) => ({
-            key: item.day,
-            label: `Ngày 0${index + 1}`,
-            title: item.title,
-            status: (index === 0 ? "active" : index === 1 ? "upcoming" : "locked") as Day["status"],
-            pdfUrl: item.pdfPath.startsWith("http")
-              ? item.pdfPath
-              : `https://gimnlxrzpzpfbpiuobez.supabase.co/storage/v1/object/public/slides/${item.pdfPath}`,
-          }));
-          setSlideDocs(mapped);
-        }
+        const documents = res.data || [];
+        const mapped = COURSE_SLIDES.map((course) => {
+          const source = documents.find((item: any) => item.day === course.key);
+          const sourcePath = source?.pdfPath || "";
+          const expectedFile = course.pdfUrl.split("/").at(-1) || "";
+          const matchesCourseFile = sourcePath.includes(expectedFile);
+
+          return {
+            ...course,
+            pdfUrl:
+              matchesCourseFile && sourcePath.startsWith("http")
+                ? sourcePath
+                : matchesCourseFile
+                  ? `https://gimnlxrzpzpfbpiuobez.supabase.co/storage/v1/object/public/slides/${sourcePath}`
+                  : course.pdfUrl,
+          };
+        });
+        setSlideDocs(mapped);
       } catch (err: any) {
         if (err.name === "AbortError") return;
-        // Fallback to offline defaults if server unavailable (guest mode local fallback)
-        setSlideDocs([
-          {
-            key: "day01",
-            label: "Ngày 01",
-            title: "Nền tảng JTBD",
-            status: "active",
-            pdfUrl: "https://gimnlxrzpzpfbpiuobez.supabase.co/storage/v1/object/public/slides/d1-slide-hackathon.pdf",
-          },
-          {
-            key: "day02",
-            label: "Ngày 02",
-            title: "Phỏng vấn người dùng",
-            status: "upcoming",
-            pdfUrl: "https://gimnlxrzpzpfbpiuobez.supabase.co/storage/v1/object/public/slides/d1-slide-hackathon.pdf",
-          },
-          {
-            key: "day03",
-            label: "Ngày 03",
-            title: "Tổng hợp insight",
-            status: "locked",
-            pdfUrl: "https://gimnlxrzpzpfbpiuobez.supabase.co/storage/v1/object/public/slides/d1-slide-hackathon.pdf",
-          },
-        ]);
+        setSlideDocs(COURSE_SLIDES);
       }
     };
     fetchSlides();
@@ -179,11 +183,49 @@ function App() {
     return () => window.clearInterval(timer);
   }, [playing, numPages]);
 
-  const changeSlide = (direction: -1 | 1) => {
+  const changeSlide = useCallback((direction: -1 | 1) => {
     setPlaying(false);
     if (numPages <= 0) return;
-    setSlideIndex((current) => (current + direction + numPages) % numPages);
-  };
+    setSlideIndex((current) =>
+      Math.min(numPages - 1, Math.max(0, current + direction)),
+    );
+  }, [numPages]);
+
+  useEffect(() => {
+    const handleSlideKeyboard = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isTyping = target?.matches(
+        "input, textarea, select, [contenteditable='true']",
+      );
+      if (isTyping || quizModeActive || numPages <= 0) return;
+
+      if (event.key === "ArrowLeft" || event.key === "PageUp") {
+        event.preventDefault();
+        changeSlide(-1);
+      } else if (event.key === "ArrowRight" || event.key === "PageDown") {
+        event.preventDefault();
+        changeSlide(1);
+      } else if (event.key === "Home") {
+        event.preventDefault();
+        setPlaying(false);
+        setSlideIndex(0);
+      } else if (event.key === "End") {
+        event.preventDefault();
+        setPlaying(false);
+        setSlideIndex(numPages - 1);
+      }
+    };
+
+    window.addEventListener("keydown", handleSlideKeyboard);
+    return () => window.removeEventListener("keydown", handleSlideKeyboard);
+  }, [changeSlide, numPages, quizModeActive]);
+
+  useEffect(() => {
+    const activeDot = paginationRef.current?.querySelector<HTMLElement>(
+      `[data-slide-index="${slideIndex}"]`,
+    );
+    activeDot?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [slideIndex]);
 
   const openFullscreen = async () => {
     if (slideRef.current?.requestFullscreen) {
@@ -230,6 +272,27 @@ function App() {
       })
       .catch(() => setProgressPct("0%"));
   }, [user, activeDay, slideDocs]);
+
+  // Keep the learner view in sync with quizzes activated from the admin app.
+  useEffect(() => {
+    const day = slideDocs[activeDay]?.key;
+    if (!day) return;
+
+    let cancelled = false;
+    setQuizEnabled(false);
+    quizApi
+      .getActiveQuizzes(day)
+      .then((quizzes) => {
+        if (!cancelled) setQuizEnabled(quizzes.length > 0);
+      })
+      .catch(() => {
+        if (!cancelled) setQuizEnabled(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeDay, slideDocs]);
 
   // If slides are loading, show a clean loading indicator
   if (slideDocs.length === 0) {
@@ -315,7 +378,7 @@ function App() {
             </span>
             <div>
               <small>Chương trình của bạn</small>
-              <strong>Hiểu đúng vấn đề người dùng</strong>
+              <strong>AI in Action · Nền tảng đến bài toán</strong>
             </div>
           </div>
 
@@ -360,6 +423,11 @@ function App() {
                   </div>
                 </div>
                 <div className="slide-actions">
+                  <span className="keyboard-hint" aria-label="Dùng phím mũi tên trái và phải để chuyển slide">
+                    <kbd>←</kbd>
+                    <kbd>→</kbd>
+                    <span>chuyển slide</span>
+                  </span>
                   <span className="slide-count">
                     {String(slideIndex + 1).padStart(2, "0")} /{" "}
                     {String(numPages || 1).padStart(2, "0")}
@@ -417,7 +485,8 @@ function App() {
                   type="button"
                   onClick={() => changeSlide(-1)}
                   aria-label="Slide trước"
-                  disabled={numPages <= 1}
+                  aria-keyshortcuts="ArrowLeft PageUp"
+                  disabled={numPages <= 1 || slideIndex === 0}
                 >
                   <ArrowLeft />
                 </button>
@@ -426,16 +495,18 @@ function App() {
                   type="button"
                   onClick={() => changeSlide(1)}
                   aria-label="Slide tiếp theo"
-                  disabled={numPages <= 1}
+                  aria-keyshortcuts="ArrowRight PageDown"
+                  disabled={numPages <= 1 || slideIndex === numPages - 1}
                 >
                   <ArrowRight />
                 </button>
               </div>
 
-              <div className="slide-pagination" aria-label="Chọn slide">
-                {Array.from({ length: Math.min(numPages, 20) }, (_, index) => (
+              <div className="slide-pagination" aria-label="Chọn slide" ref={paginationRef}>
+                {Array.from({ length: numPages }, (_, index) => (
                   <button
                     key={index}
+                    data-slide-index={index}
                     className={index === slideIndex ? "is-active" : ""}
                     type="button"
                     onClick={() => {
@@ -443,6 +514,7 @@ function App() {
                       setSlideIndex(index);
                     }}
                     aria-label={`Mở slide ${index + 1}`}
+                    title={`Slide ${index + 1}`}
                     aria-current={index === slideIndex ? "true" : undefined}
                   />
                 ))}
@@ -453,7 +525,9 @@ function App() {
               enabled={quizEnabled}
               activeDay={slideDocs[activeDay]?.key || "day01"}
               isGuest={isGuest}
+              lessonTitle={slideDocs[activeDay]?.title || ""}
               onRequestAdmin={() => setAdminPanelOpen(true)}
+              onQuizModeChange={setQuizModeActive}
             />
           </div>
 
@@ -551,12 +625,16 @@ function QuizPanel({
   enabled,
   activeDay,
   isGuest,
+  lessonTitle,
   onRequestAdmin,
+  onQuizModeChange,
 }: {
   enabled: boolean;
   activeDay: string;
   isGuest: boolean;
+  lessonTitle: string;
   onRequestAdmin: () => void;
+  onQuizModeChange: (active: boolean) => void;
 }) {
   const { user } = useAuth();
   const [quiz, setQuiz] = useState<quizApi.Quiz | null>(null);
@@ -567,6 +645,8 @@ function QuizPanel({
   const [result, setResult] = useState<quizApi.QuizResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [startTime] = useState(() => Date.now());
+  const [isExpanded, setIsExpanded] = useState(true);
+  const quizContainerRef = useRef<HTMLElement>(null);
 
   // Fetch active quiz when enabled
   useEffect(() => {
@@ -577,6 +657,7 @@ function QuizPanel({
       setAnswers(new Map());
       setComplete(false);
       setResult(null);
+      setIsExpanded(true);
       return;
     }
 
@@ -588,6 +669,7 @@ function QuizPanel({
           const fullQuiz = await quizApi.getQuizById(quizzes[0].id);
           setQuiz(fullQuiz);
           setQuestions(fullQuiz.questions || []);
+          setIsExpanded(true);
         }
       })
       .catch(() => {
@@ -595,6 +677,22 @@ function QuizPanel({
       })
       .finally(() => setLoading(false));
   }, [enabled, activeDay]);
+
+  const isTakingQuiz =
+    enabled && !loading && questions.length > 0 && !complete && isExpanded;
+
+  useEffect(() => {
+    onQuizModeChange(isTakingQuiz);
+    if (!isTakingQuiz) return;
+
+    document.body.classList.add("quiz-mode-open");
+    window.requestAnimationFrame(() => quizContainerRef.current?.focus());
+
+    return () => {
+      document.body.classList.remove("quiz-mode-open");
+      onQuizModeChange(false);
+    };
+  }, [isTakingQuiz, onQuizModeChange]);
 
   const score = useMemo(() => {
     if (!result) return 0;
@@ -744,8 +842,62 @@ function QuizPanel({
     }
   };
 
+  const handleQuizKeyboard = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key === "Escape" && isExpanded) {
+      event.preventDefault();
+      setIsExpanded(false);
+      return;
+    }
+
+    const optionKey = event.key.toUpperCase();
+    if (["A", "B", "C", "D"].includes(optionKey)) {
+      event.preventDefault();
+      choose(optionKey);
+    } else if (
+      event.key === "Enter" &&
+      selected &&
+      (event.target as HTMLElement).tagName !== "BUTTON"
+    ) {
+      event.preventDefault();
+      void proceed();
+    }
+  };
+
   return (
-    <section className="quiz-panel quiz-active" aria-labelledby="active-quiz-title">
+    <section
+      className={`quiz-panel quiz-active ${isExpanded ? "is-fullscreen" : ""}`}
+      aria-labelledby="active-quiz-title"
+      aria-modal={isExpanded ? "true" : undefined}
+      role={isExpanded ? "dialog" : undefined}
+      ref={quizContainerRef}
+      tabIndex={-1}
+      onKeyDown={handleQuizKeyboard}
+    >
+      <div className="quiz-session-bar">
+        <div>
+          <small>{lessonTitle}</small>
+          <strong>{quiz?.title || "Checkpoint bài học"}</strong>
+        </div>
+        <div className="quiz-session-actions">
+          <span><kbd>A–D</kbd> chọn · <kbd>Enter</kbd> tiếp tục</span>
+          <button
+            className="icon-button"
+            type="button"
+            onClick={() => setIsExpanded((value) => !value)}
+            aria-label={isExpanded ? "Thu nhỏ quiz" : "Mở quiz toàn màn hình"}
+          >
+            {isExpanded ? <X /> : <ArrowsOut />}
+          </button>
+        </div>
+      </div>
+
+      <progress
+        className="quiz-progress"
+        max={questions.length}
+        value={questionIndex + 1}
+        aria-label={`Câu ${questionIndex + 1} trên ${questions.length}`}
+      />
+
       <div className="quiz-heading">
         <div>
           <span className="quiz-status">Live quiz</span>
