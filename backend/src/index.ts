@@ -13,6 +13,7 @@ import logger from "./utils/logger.js";
 
 const app = express();
 
+app.disable('etag'); // Thêm dòng này để tắt cache ETag
 // Security middleware
 app.use(helmet());
 app.use(cors(corsOptions));
