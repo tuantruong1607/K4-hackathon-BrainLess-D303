@@ -13,7 +13,7 @@ import QuizManagement from "./pages/QuizManagement";
 import SlideManagement from "./pages/SlideManagement";
 
 import "./styles.css";
-import "./admin.css";
+// import "./admin.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
