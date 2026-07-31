@@ -1,13 +1,61 @@
-import { StrictMode } from "react";
+import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "@fontsource-variable/geist";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import App from "./App";
 import LoginPage from "./LoginPage";
+import AdminLayout from "./layouts/AdminLayout";
+import AdminDashboard from "./pages/AdminDashboard";
+import UserManagement from "./pages/UserManagement";
+import QuizManagement from "./pages/QuizManagement";
+import SlideManagement from "./pages/SlideManagement";
+
 import "./styles.css";
+import "./admin.css";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+function StudentRoute({ children }: { children: React.ReactNode }) {
+  const { user, isGuest } = useAuth();
+  if (!user && !isGuest) {
+    return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  if (user.role !== "ADMIN") {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+}
+
+function LoginRoute() {
+  const { user, isGuest } = useAuth();
+  if (user) {
+    return <Navigate to={user.role === "ADMIN" ? "/admin" : "/"} replace />;
+  }
+  if (isGuest) {
+    return <Navigate to="/" replace />;
+  }
+  return <LoginPage />;
+}
 
 function Root() {
-  const { user, isLoading, isGuest } = useAuth();
+  const { isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -19,18 +67,44 @@ function Root() {
     );
   }
 
-  // Show classroom if logged in OR browsing as guest
-  if (user || isGuest) {
-    return <App />;
-  }
-
-  return <LoginPage />;
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginRoute />} />
+      <Route
+        path="/"
+        element={
+          <StudentRoute>
+            <App />
+          </StudentRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <AdminLayout />
+          </AdminRoute>
+        }
+      >
+        <Route index element={<AdminDashboard />} />
+        <Route path="users" element={<UserManagement />} />
+        <Route path="quizzes" element={<QuizManagement />} />
+        <Route path="slides" element={<SlideManagement />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
 }
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <AuthProvider>
-      <Root />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <Root />
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
   </StrictMode>,
 );
+
