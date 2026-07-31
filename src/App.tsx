@@ -9,12 +9,14 @@ import {
   Clock,
   GraduationCap,
   LockKey,
+  Moon,
   PaperPlaneTilt,
   Pause,
   Play,
   SignOut,
   SlidersHorizontal,
   Sparkle,
+  Sun,
   X,
 } from "@phosphor-icons/react";
 import {
@@ -67,6 +69,22 @@ type AgentResponseLevel = "beginner" | "intermediate" | "advanced";
 
 function App() {
   const { user, isGuest, logout } = useAuth();
+
+  // Theme state: light or dark
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "light" || saved === "dark") return saved;
+    return "light";
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((t) => (t === "light" ? "dark" : "light"));
+  };
 
   const [slideDocs, setSlideDocs] = useState<Day[]>([]);
 
@@ -272,6 +290,15 @@ function App() {
             <Clock />
             <span>{sessionTime}</span>
           </div>
+
+          <button
+            className="icon-button theme-toggle"
+            type="button"
+            onClick={toggleTheme}
+            aria-label={theme === "light" ? "Chuyển sang chế độ tối" : "Chuyển sang chế độ sáng"}
+          >
+            {theme === "light" ? <Moon weight="fill" /> : <Sun weight="fill" />}
+          </button>
 
           {/* Admin controls — only for ADMIN role */}
           {isAdmin && (

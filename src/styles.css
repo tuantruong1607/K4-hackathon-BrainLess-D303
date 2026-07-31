@@ -40,6 +40,11 @@ body {
   min-width: 320px;
   min-height: 100dvh;
   background: var(--page);
+  color: var(--ink);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--ink);
 }
 
 button,
@@ -1263,6 +1268,7 @@ kbd {
   border: 1px solid var(--line);
   border-radius: var(--radius-small);
   background: var(--surface-soft);
+  color: var(--ink);
   cursor: pointer;
   transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
 }
@@ -1274,6 +1280,7 @@ kbd {
 .answer-option.is-selected {
   border-color: var(--accent);
   background: var(--accent-soft);
+  color: var(--ink);
 }
 
 .answer-option > span {
@@ -1297,6 +1304,7 @@ kbd {
   font-size: 12px;
   font-weight: 600;
   line-height: 1.35;
+  color: var(--ink);
 }
 
 .answer-option > svg {
@@ -2198,57 +2206,56 @@ kbd {
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: #e9edf7;
-    background: #11151d;
-    --page: #11151d;
-    --page-glass: rgba(17, 21, 29, 0.84);
-    --surface: rgba(27, 33, 44, 0.9);
-    --surface-solid: #1b212c;
-    --surface-soft: #202733;
-    --surface-strong: #2b3341;
-    --ink: #e9edf7;
-    --ink-soft: #bdc6d8;
-    --muted: #939eb2;
-    --line: rgba(223, 231, 246, 0.1);
-    --line-strong: rgba(223, 231, 246, 0.18);
-    --accent: #6d91f3;
-    --accent-dark: #a7bcf8;
-    --accent-soft: #27375c;
-    --accent-faint: rgba(109, 145, 243, 0.12);
-    --shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
-    --shadow-soft: 0 10px 34px rgba(0, 0, 0, 0.18);
-  }
-
-  .app-shell {
-    background:
-      linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
-      var(--page);
-    background-size: 44px 44px;
-  }
-
-  .profile-avatar {
-    color: #d9e3ff;
-  }
-
-  .switch span {
-    background: #f3f5f8;
-  }
-
-  .slide-stage:fullscreen {
-    background: #11151d;
-  }
-
-  .slide-nav {
-    color: #313c51;
-  }
-
-  .chat-input-wrap textarea::placeholder {
-    color: #939eb2;
-  }
+:root[data-theme='dark'] {
+  color: #f0f3fa;
+  background: #161b25;
+  --page: #161b25;
+  --page-glass: rgba(22, 27, 37, 0.85);
+  --surface: rgba(30, 37, 51, 0.9);
+  --surface-solid: #1e2533;
+  --surface-soft: #262e3f;
+  --surface-strong: #323d53;
+  --ink: #f0f3fa;
+  --ink-soft: #cbd4e6;
+  --muted: #9ba7bd;
+  --line: rgba(223, 231, 246, 0.09);
+  --line-strong: rgba(223, 231, 246, 0.16);
+  --accent: #6d91f3;
+  --accent-dark: #a7bcf8;
+  --accent-soft: #27375c;
+  --accent-faint: rgba(109, 145, 243, 0.12);
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+  --shadow-soft: 0 10px 34px rgba(0, 0, 0, 0.18);
 }
+
+:root[data-theme='dark'] .app-shell {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    var(--page);
+  background-size: 44px 44px;
+}
+
+:root[data-theme='dark'] .profile-avatar {
+  color: #d9e3ff;
+}
+
+:root[data-theme='dark'] .switch span {
+  background: #f3f5f8;
+}
+
+:root[data-theme='dark'] .slide-stage:fullscreen {
+  background: #161b25;
+}
+
+:root[data-theme='dark'] .slide-nav {
+  color: #313c51;
+}
+
+:root[data-theme='dark'] .chat-input-wrap textarea::placeholder {
+  color: #9ba7bd;
+}
+
 
 @media (prefers-reduced-motion: reduce) {
   *,
