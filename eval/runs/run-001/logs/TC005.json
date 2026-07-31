@@ -1,0 +1,91 @@
+{
+  "case_id": "TC005",
+  "timestamp": "2026-07-30T17:14:04.601427+00:00",
+  "model": "gpt-4o-mini",
+  "distribution": "common",
+  "risk_classes": [],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T0990",
+    "note": "Một từ tiếng Anh đặt trong câu tiếng Việt."
+  },
+  "input": {
+    "question": "\"Context\" là gì",
+    "day": "day01",
+    "current_slide": "Context",
+    "level": "beginner",
+    "context_source": "transcript-04-clean.md [T04-057,T04-089]",
+    "context": "Context là phần thông tin/ngữ cảnh được đưa vào cùng prompt để mô hình dựa vào khi xử lý yêu cầu. Context có thể gồm nội dung tài liệu, lịch sử hội thoại và dữ liệu bổ sung; quản lý context tốt giúp giữ hiệu năng và giảm chi phí token."
+  },
+  "expected_behavior": "Định nghĩa context là thông tin đi kèm prompt giúp model hiểu và trả lời, kèm một ví dụ.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "thông tin",
+        "ngữ cảnh"
+      ],
+      [
+        "prompt",
+        "yêu cầu"
+      ],
+      [
+        "mô hình",
+        "model"
+      ]
+    ],
+    "forbidden_terms": [],
+    "must_ask_clarifying": false,
+    "max_words": 140
+  },
+  "output": "\"Context\" trong tiếng Việt có thể hiểu là \"ngữ cảnh\". Đây là phần thông tin hoặc bối cảnh mà chúng ta cần để hiểu rõ hơn về một vấn đề nào đó. \n\nVí dụ, khi bạn đọc một câu chuyện, ngữ cảnh sẽ giúp bạn biết về thời gian, địa điểm và tình huống mà câu chuyện diễn ra. Nếu bạn chỉ đọc một câu mà không biết ngữ cảnh, bạn có thể không hiểu rõ ý nghĩa của nó.\n\nTrong trường hợp của bài học này, \"context\" được sử dụng để cung cấp thông tin cho một mô hình (như AI) để nó có thể hiểu và xử lý yêu cầu một cách chính xác hơn. Khi có ngữ cảnh rõ ràng, mô hình sẽ hoạt động hiệu quả hơn và đưa ra câu trả lời phù hợp hơn.\n\nHy vọng giải thích này giúp bạn hiểu rõ hơn về \"context\"!",
+  "error": null,
+  "latency_ms": 3229.43,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": false
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "thông tin",
+          "ngữ cảnh"
+        ],
+        "passed": true,
+        "matched": [
+          "thông tin",
+          "ngữ cảnh"
+        ]
+      },
+      {
+        "alternatives": [
+          "prompt",
+          "yêu cầu"
+        ],
+        "passed": true,
+        "matched": [
+          "yêu cầu"
+        ]
+      },
+      {
+        "alternatives": [
+          "mô hình",
+          "model"
+        ],
+        "passed": true,
+        "matched": [
+          "mô hình"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 152,
+    "max_words": 140,
+    "hallucination": false
+  },
+  "regraded_at": "2026-07-30T17:18:06.106999+00:00"
+}

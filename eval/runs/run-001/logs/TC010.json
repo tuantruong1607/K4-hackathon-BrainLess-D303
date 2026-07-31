@@ -1,0 +1,104 @@
+{
+  "case_id": "TC010",
+  "timestamp": "2026-07-30T17:14:27.870687+00:00",
+  "model": "gpt-4o-mini",
+  "distribution": "common",
+  "risk_classes": [],
+  "origin": {
+    "type": "synthetic",
+    "reference": "transcript-derived",
+    "note": "Case so sánh hai khái niệm trong bài."
+  },
+  "input": {
+    "question": "Phân biệt augmentation và automation trong sản phẩm AI",
+    "day": "day02",
+    "current_slide": "Mức tự động hoá",
+    "level": "intermediate",
+    "context_source": "transcript-02-clean.md [T02-030,T02-031]",
+    "context": "Augmentation là AI hỗ trợ để con người quyết định hoặc hoàn thành công việc tốt hơn. Automation là hệ thống tự thực hiện công việc. Khi hậu quả sai cao, nên giữ con người trong vòng lặp; chỉ tự động hoá cao khi sai dễ phát hiện và dễ sửa."
+  },
+  "expected_behavior": "Phân biệt hỗ trợ con người với tự thực hiện và liên hệ mức tự động hoá với hậu quả khi sai.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "hỗ trợ"
+      ],
+      [
+        "con người"
+      ],
+      [
+        "tự thực hiện",
+        "tự động"
+      ],
+      [
+        "hậu quả",
+        "rủi ro",
+        "sai"
+      ]
+    ],
+    "forbidden_terms": [],
+    "must_ask_clarifying": false,
+    "max_words": 180
+  },
+  "output": "Augmentation và automation là hai khái niệm quan trọng trong lĩnh vực AI, và chúng có những điểm khác biệt rõ ràng.\n\n**Augmentation** (tăng cường) là khi AI hỗ trợ con người trong việc ra quyết định hoặc hoàn thành công việc. Mục tiêu của augmentation là giúp con người làm việc hiệu quả hơn, bằng cách cung cấp thông tin, phân tích dữ liệu hoặc gợi ý. Ví dụ, trong một ứng dụng phân tích dữ liệu, AI có thể cung cấp các dự đoán hoặc phân tích xu hướng, nhưng cuối cùng, con người vẫn là người đưa ra quyết định cuối cùng dựa trên thông tin đó.\n\nNgược lại, **Automation** (tự động hoá) là khi hệ thống AI tự thực hiện công việc mà không cần sự can thiệp của con người. Điều này có thể bao gồm các quy trình như tự động gửi email, xử lý đơn hàng, hoặc thậm chí là lái xe tự động. Automation thường được áp dụng trong các tình huống mà sai sót dễ dàng phát hiện và sửa chữa, vì nếu không, hậu quả có thể nghiêm trọng.\n\nMột cách đơn giản để phân biệt là: augmentation là \"hỗ trợ con người\", trong khi automation là \"thay thế con người\". Khi hậu quả của việc sai sót cao, việc giữ con người trong vòng lặp là cần thiết, tức là nên sử dụng augmentation. Chỉ khi nào sai sót dễ phát hiện và sửa chữa, automation mới được áp dụng ở mức cao hơn.\n\nHy vọng rằng sự phân biệt này giúp bạn hiểu rõ hơn về hai khái niệm này trong sản phẩm AI!",
+  "error": null,
+  "latency_ms": 4147.64,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": false
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "hỗ trợ"
+        ],
+        "passed": true,
+        "matched": [
+          "hỗ trợ"
+        ]
+      },
+      {
+        "alternatives": [
+          "con người"
+        ],
+        "passed": true,
+        "matched": [
+          "con người"
+        ]
+      },
+      {
+        "alternatives": [
+          "tự thực hiện",
+          "tự động"
+        ],
+        "passed": true,
+        "matched": [
+          "tự thực hiện",
+          "tự động"
+        ]
+      },
+      {
+        "alternatives": [
+          "hậu quả",
+          "rủi ro",
+          "sai"
+        ],
+        "passed": true,
+        "matched": [
+          "hậu quả",
+          "sai"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 276,
+    "max_words": 180,
+    "hallucination": false
+  },
+  "regraded_at": "2026-07-30T17:18:06.110662+00:00"
+}

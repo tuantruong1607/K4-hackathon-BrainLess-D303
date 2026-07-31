@@ -3,6 +3,7 @@ dist/
 .vite/
 *.local
 *.log
+.env
 
 # Hackathon source material is kept locally and is not required by the frontend.
 Batch03-K4-AI-Product-Hackathon/
@@ -35,3 +36,7 @@ agent/.pytest_cache/
 .coverage
 coverage.xml
 htmlcov/
+
+# Eval runner
+eval/__pycache__/
+eval/.pytest_cache/

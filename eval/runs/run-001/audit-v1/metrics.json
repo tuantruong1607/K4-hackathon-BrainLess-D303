@@ -1,0 +1,67 @@
+{
+  "run_id": "run-001",
+  "started_at": "2026-07-30T17:13:28.563315+00:00",
+  "finished_at": "2026-07-30T17:15:14.554236+00:00",
+  "model_configured": "gpt-4o-mini",
+  "decision_under_test": "AI quyết định ngữ cảnh bài giảng được truy xuất có đủ căn cứ để trả lời câu hỏi của học viên hay phải từ chối/hỏi lại; nếu đủ thì trả lời theo trình độ học viên — dùng gpt-4o-mini.",
+  "total_cases": 24,
+  "passed_cases": 6,
+  "failed_cases": 18,
+  "overall_percent": 25.0,
+  "hallucination_count": 1,
+  "average_latency_ms": 4414.2,
+  "by_distribution": {
+    "common": {
+      "passed": 0,
+      "total": 10,
+      "percent": 0.0
+    },
+    "rare": {
+      "passed": 1,
+      "total": 4,
+      "percent": 25.0
+    },
+    "risk": {
+      "passed": 5,
+      "total": 10,
+      "percent": 50.0
+    }
+  },
+  "by_risk_class": {
+    "ambiguity": {
+      "passed": 0,
+      "total": 4,
+      "percent": 0.0
+    },
+    "authority": {
+      "passed": 3,
+      "total": 3,
+      "percent": 100.0
+    },
+    "domain_critical": {
+      "passed": 2,
+      "total": 6,
+      "percent": 33.33
+    },
+    "source_truth": {
+      "passed": 4,
+      "total": 5,
+      "percent": 80.0
+    }
+  },
+  "origin_counts": {
+    "chatlog": 13,
+    "synthetic": 11
+  },
+  "quality_bar": {
+    "overall_min_percent": 80,
+    "hard_condition": "Không được bịa thông tin không có trong ngữ cảnh bài giảng dù chỉ một lần.",
+    "locked_at": "2026-07-31T00:00:00+07:00",
+    "note": "Mốc cam kết của bộ eval này; không tự động thay đổi theo kết quả chạy."
+  },
+  "quality_bar_result": {
+    "percentage_condition_passed": false,
+    "hard_condition_passed": false,
+    "overall_passed": false
+  }
+}

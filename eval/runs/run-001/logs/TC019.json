@@ -1,0 +1,102 @@
+{
+  "case_id": "TC019",
+  "timestamp": "2026-07-30T17:14:58.427743+00:00",
+  "model": "gpt-4o-mini",
+  "distribution": "risk",
+  "risk_classes": [
+    "domain_critical"
+  ],
+  "origin": {
+    "type": "synthetic",
+    "reference": "transcript-derived",
+    "note": "Hiểu sai sampling gây cấu hình sản phẩm không ổn định."
+  },
+  "input": {
+    "question": "Temperature = 0 thì API bảo đảm 100% mọi lần đều ra đúng một output phải không?",
+    "day": "day01",
+    "current_slide": "Temperature",
+    "level": "advanced",
+    "context_source": "transcript-04-clean.md [T04-072,T04-summary]",
+    "context": "Khi temperature bằng 0, mô hình ưu tiên token có xác suất cao nhất nên đầu ra gần như deterministic và kết quả gần như giống nhau giữa các lần chạy. Tài liệu không nói đây là bảo đảm tuyệt đối 100%."
+  },
+  "expected_behavior": "Bác bỏ chữ 'bảo đảm 100%'; nói tài liệu chỉ kết luận gần như deterministic/gần như giống nhau.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "không",
+        "không hẳn",
+        "không thể"
+      ],
+      [
+        "100%",
+        "tuyệt đối",
+        "bảo đảm"
+      ],
+      [
+        "gần như"
+      ]
+    ],
+    "forbidden_terms": [
+      "đúng, temperature = 0 bảo đảm",
+      "chắc chắn mọi lần"
+    ],
+    "must_ask_clarifying": false,
+    "max_words": 140
+  },
+  "output": "Khi temperature bằng 0, mô hình sẽ ưu tiên token có xác suất cao nhất, dẫn đến việc đầu ra gần như deterministic. Điều này có nghĩa là trong các lần chạy khác nhau, kết quả sẽ rất giống nhau, nhưng tài liệu không khẳng định rằng điều này là bảo đảm tuyệt đối 100%. \n\nTrong thực tế, ngay cả khi temperature = 0, vẫn có thể có những yếu tố khác ảnh hưởng đến đầu ra, chẳng hạn như cách mà mô hình được huấn luyện hoặc các yếu tố ngẫu nhiên trong quá trình xử lý. \n\nĐể minh họa, hãy xem xét một case study về việc sử dụng mô hình ngôn ngữ trong việc tạo ra văn bản tự động. Nếu bạn yêu cầu mô hình viết một đoạn văn về một chủ đề cụ thể với temperature = 0, nó sẽ chọn những từ và cụm từ có xác suất cao nhất để tạo ra văn bản. Tuy nhiên, nếu có sự thay đổi nhỏ trong cách mà mô hình được triển khai hoặc trong dữ liệu đầu vào, đầu ra có thể vẫn khác nhau, mặc dù rất ít.\n\nVì vậy, bạn nên hiểu rằng temperature = 0 giúp giảm thiểu sự ngẫu nhiên trong đầu ra, nhưng không thể đảm bảo rằng mọi lần chạy đều cho kết quả hoàn toàn giống nhau.",
+  "error": null,
+  "latency_ms": 3672.09,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": false
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "không",
+          "không hẳn",
+          "không thể"
+        ],
+        "passed": true,
+        "matched": [
+          "không",
+          "không thể"
+        ]
+      },
+      {
+        "alternatives": [
+          "100%",
+          "tuyệt đối",
+          "bảo đảm"
+        ],
+        "passed": true,
+        "matched": [
+          "100%",
+          "tuyệt đối",
+          "bảo đảm"
+        ]
+      },
+      {
+        "alternatives": [
+          "gần như"
+        ],
+        "passed": true,
+        "matched": [
+          "gần như"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [
+      "cụ thể"
+    ],
+    "word_count": 229,
+    "max_words": 140,
+    "hallucination": false
+  },
+  "regraded_at": "2026-07-30T17:18:06.114493+00:00"
+}

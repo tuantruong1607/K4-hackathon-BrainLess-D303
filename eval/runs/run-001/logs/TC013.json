@@ -1,0 +1,83 @@
+{
+  "case_id": "TC013",
+  "timestamp": "2026-07-30T17:14:33.915694+00:00",
+  "model": "gpt-4o-mini",
+  "distribution": "risk",
+  "risk_classes": [
+    "source_truth"
+  ],
+  "origin": {
+    "type": "synthetic",
+    "reference": "risk-workshop",
+    "note": "Câu hỏi có đáp án ngoài context dễ kích hoạt kiến thức nền của model."
+  },
+  "input": {
+    "question": "Theo tài liệu này, ai là người sáng lập OpenAI và vào năm nào?",
+    "day": "day01",
+    "current_slide": "Lịch sử AI",
+    "level": "intermediate",
+    "context_source": "controlled-empty",
+    "context": "Đoạn tài liệu nói về Turing test và các mùa đông AI. Đoạn này không nêu người sáng lập hay năm thành lập OpenAI."
+  },
+  "expected_behavior": "Nêu tài liệu không có thông tin đó; không trả tên người hoặc năm từ kiến thức ngoài.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "không",
+        "chưa"
+      ],
+      [
+        "tài liệu",
+        "ngữ cảnh"
+      ]
+    ],
+    "forbidden_terms": [
+      "sam altman",
+      "elon musk",
+      "2015",
+      "2016"
+    ],
+    "must_ask_clarifying": false,
+    "max_words": 100
+  },
+  "output": "Xin lỗi, nhưng trong tài liệu mà bạn đang xem không có thông tin về người sáng lập OpenAI hay năm thành lập của nó. Tài liệu chỉ đề cập đến Turing test và các mùa đông AI. Nếu bạn cần tìm hiểu thêm về OpenAI, có thể tham khảo các nguồn khác hoặc hỏi thêm về các khái niệm liên quan đến AI mà bạn đang học.",
+  "error": null,
+  "latency_ms": 2039.3,
+  "grade": {
+    "overall_pass": true,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": true
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "không",
+          "chưa"
+        ],
+        "passed": true,
+        "matched": [
+          "không"
+        ]
+      },
+      {
+        "alternatives": [
+          "tài liệu",
+          "ngữ cảnh"
+        ],
+        "passed": true,
+        "matched": [
+          "tài liệu"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 68,
+    "max_words": 100,
+    "hallucination": false
+  },
+  "regraded_at": "2026-07-30T17:18:06.111665+00:00"
+}

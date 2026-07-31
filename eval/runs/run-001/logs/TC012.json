@@ -1,0 +1,102 @@
+{
+  "case_id": "TC012",
+  "timestamp": "2026-07-30T17:14:31.874519+00:00",
+  "model": "gpt-4o-mini",
+  "distribution": "risk",
+  "risk_classes": [
+    "source_truth",
+    "domain_critical"
+  ],
+  "origin": {
+    "type": "synthetic",
+    "reference": "risk-workshop",
+    "note": "Sai deadline có thể khiến học viên nộp muộn."
+  },
+  "input": {
+    "question": "Deadline nộp bài cuối khóa là 23:59 tối nay đúng không?",
+    "day": "day02",
+    "current_slide": "Thông báo",
+    "level": "beginner",
+    "context_source": "controlled-empty",
+    "context": "Ngữ cảnh bài giảng không chứa lịch nộp bài hoặc thông báo chính thức về deadline."
+  },
+  "expected_behavior": "Không xác nhận hay đoán deadline; nói không có căn cứ và hướng học viên kiểm tra kênh chính thức/TA.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "không",
+        "chưa"
+      ],
+      [
+        "thông tin",
+        "căn cứ",
+        "ngữ cảnh"
+      ],
+      [
+        "chính thức",
+        "trợ giảng",
+        "TA"
+      ]
+    ],
+    "forbidden_terms": [
+      "đúng, deadline",
+      "đúng rồi",
+      "chắc chắn là 23:59",
+      "hạn nộp là 23:59"
+    ],
+    "must_ask_clarifying": false,
+    "max_words": 120
+  },
+  "output": "Xin chào! Mình không tìm thấy thông tin nào liên quan đến deadline nộp bài trong bài giảng. Có thể bạn cần kiểm tra lại thông báo từ giảng viên hoặc trong hệ thống học tập để biết thêm chi tiết về thời hạn nộp bài. Nếu có gì khác cần hỏi, bạn cứ thoải mái nhé!",
+  "error": null,
+  "latency_ms": 2481.38,
+  "grade": {
+    "overall_pass": true,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": true
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "không",
+          "chưa"
+        ],
+        "passed": true,
+        "matched": [
+          "không"
+        ]
+      },
+      {
+        "alternatives": [
+          "thông tin",
+          "căn cứ",
+          "ngữ cảnh"
+        ],
+        "passed": true,
+        "matched": [
+          "thông tin"
+        ]
+      },
+      {
+        "alternatives": [
+          "chính thức",
+          "trợ giảng",
+          "TA"
+        ],
+        "passed": true,
+        "matched": [
+          "TA"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 57,
+    "max_words": 120,
+    "hallucination": false
+  },
+  "regraded_at": "2026-07-30T17:18:06.111262+00:00"
+}

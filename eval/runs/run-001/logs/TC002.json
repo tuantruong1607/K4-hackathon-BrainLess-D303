@@ -1,0 +1,88 @@
+{
+  "case_id": "TC002",
+  "timestamp": "2026-07-30T17:13:48.807536+00:00",
+  "model": "gpt-4o-mini",
+  "distribution": "common",
+  "risk_classes": [],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T0984",
+    "note": "Câu hỏi nguyên văn từ học viên."
+  },
+  "input": {
+    "question": "Hãy giải thích về attention mechanism",
+    "day": "day01",
+    "current_slide": "Attention",
+    "level": "beginner",
+    "context_source": "transcript-04-clean.md [T04-054,T04-056]",
+    "context": "Attention cho phép mô hình nhìn toàn bộ câu và chấm mức liên quan giữa các token để tập trung vào phần quan trọng. Multi-head attention dùng nhiều 'con mắt', mỗi head nhận ra một đặc trưng khác nhau rồi tổng hợp lại."
+  },
+  "expected_behavior": "Giải thích attention là cơ chế chấm mức liên quan giữa token và tập trung vào phần quan trọng; có thể dùng ví dụ dễ hiểu.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "liên quan"
+      ],
+      [
+        "token",
+        "từ"
+      ],
+      [
+        "tập trung",
+        "chú ý"
+      ]
+    ],
+    "forbidden_terms": [],
+    "must_ask_clarifying": false,
+    "max_words": 160
+  },
+  "output": "Attention mechanism là một cách giúp máy tính hiểu và tập trung vào những phần quan trọng trong một câu. Bạn có thể tưởng tượng nó giống như khi bạn đọc một cuốn sách, bạn sẽ không đọc tất cả các từ một cách đều nhau. Thay vào đó, bạn sẽ chú ý đến những từ hoặc câu quan trọng hơn để hiểu nội dung chính.\n\nVí dụ, nếu bạn đọc một câu như \"Con mèo đang nằm trên ghế sofa\", bạn sẽ chú ý đến từ \"mèo\" và \"ghế sofa\" vì chúng là những từ quan trọng giúp bạn hình dung ra cảnh vật. \n\nTrong máy tính, attention giúp mô hình (như một loại trí tuệ nhân tạo) làm điều tương tự. Nó sẽ \"nhìn\" vào toàn bộ câu và đánh giá mức độ quan trọng của từng từ (hay còn gọi là token). Nhờ vậy, mô hình có thể tập trung vào những từ quan trọng nhất để hiểu rõ hơn về ý nghĩa của câu.\n\nNgoài ra, có một khái niệm gọi là \"multi-head attention\". Bạn có thể nghĩ rằng nó giống như có nhiều \"con mắt\" khác nhau. Mỗi \"con mắt\" này sẽ chú ý đến một phần khác nhau của câu. Sau đó, tất cả những thông tin từ các \"con mắt\" này sẽ được tổng hợp lại để giúp mô hình hiểu rõ hơn.\n\nTóm lại, attention mechanism giúp máy tính biết được phần nào trong câu là quan trọng nhất, giống như cách chúng ta đọc và chú ý đến những điều cần thiết trong một văn bản.",
+  "error": null,
+  "latency_ms": 5904.56,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": false,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": false
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "liên quan"
+        ],
+        "passed": false,
+        "matched": []
+      },
+      {
+        "alternatives": [
+          "token",
+          "từ"
+        ],
+        "passed": true,
+        "matched": [
+          "token",
+          "từ"
+        ]
+      },
+      {
+        "alternatives": [
+          "tập trung",
+          "chú ý"
+        ],
+        "passed": true,
+        "matched": [
+          "tập trung",
+          "chú ý"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 265,
+    "max_words": 160,
+    "hallucination": false
+  },
+  "regraded_at": "2026-07-30T17:18:06.104684+00:00"
+}
