@@ -1,0 +1,105 @@
+{
+  "case_id": "TC009",
+  "timestamp": "2026-07-31T03:43:41.462791+00:00",
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "distribution": "common",
+  "risk_classes": [],
+  "origin": {
+    "type": "synthetic",
+    "reference": "transcript-derived",
+    "note": "Case kiến thức cơ bản từ bài giảng."
+  },
+  "input": {
+    "question": "Product manager khác project manager ở điểm nào?",
+    "day": "day02",
+    "current_slide": "Product vs Project",
+    "level": "intermediate",
+    "context_source": "transcript-01-clean.md [T01-009,T01-010,T01-011]",
+    "context": "Project manager tập trung bảo đảm dự án hoàn thành đúng tiến độ, nguồn lực và ngân sách. Product manager đi tìm bài toán/cơ hội đáng làm, định hình sản phẩm và đặt người dùng làm trung tâm; sản phẩm tiếp tục được phát triển sau một lần bàn giao."
+  },
+  "expected_behavior": "So sánh PM dự án về tiến độ/ngân sách với PM sản phẩm về bài toán, user và hướng phát triển.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "tiến độ"
+      ],
+      [
+        "ngân sách",
+        "nguồn lực"
+      ],
+      [
+        "người dùng",
+        "user"
+      ],
+      [
+        "bài toán",
+        "cơ hội"
+      ]
+    ],
+    "forbidden_terms": [],
+    "must_ask_clarifying": false,
+    "max_words": 180
+  },
+  "output": "Product manager và project manager khác nhau ở những điểm sau:\n\n1. **Tập trung công việc**:\n   - **Project Manager**: Chịu trách nhiệm đảm bảo rằng dự án hoàn thành đúng tiến độ, sử dụng đúng nguồn lực và ngân sách đã được định sẵn. Họ quan tâm đến việc quản lý lịch trình và kết quả cụ thể trong một khoảng thời gian nhất định.\n   - **Product Manager**: Tìm kiếm các cơ hội và vấn đề cần giải quyết, định hình sản phẩm và đảm bảo rằng người dùng là trung tâm của quá trình phát triển. Công việc của họ không chỉ dừng lại ở một lần bàn giao mà sản phẩm sẽ tiếp tục phát triển và cải tiến theo thời gian.\n\n2. **Tầm nhìn**:\n   - Project Manager thường có tầm nhìn ngắn hạn, tập trung vào việc thực hiện dự án hiện tại.\n   - Product Manager có tầm nhìn dài hạn hơn, định hướng cho sản phẩm trong tương lai để đáp ứng nhu cầu của người dùng.\n\nTóm lại, Project Manager chú trọng vào việc thực hiện kế hoạch và thời gian, trong khi Product Manager tập trung vào việc phát triển và cải tiến sản phẩm để phục vụ người dùng tốt nhất.",
+  "error": null,
+  "latency_ms": 4918.1,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": false
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "tiến độ"
+        ],
+        "passed": true,
+        "matched": [
+          "tiến độ"
+        ]
+      },
+      {
+        "alternatives": [
+          "ngân sách",
+          "nguồn lực"
+        ],
+        "passed": true,
+        "matched": [
+          "ngân sách",
+          "nguồn lực"
+        ]
+      },
+      {
+        "alternatives": [
+          "người dùng",
+          "user"
+        ],
+        "passed": true,
+        "matched": [
+          "người dùng"
+        ]
+      },
+      {
+        "alternatives": [
+          "bài toán",
+          "cơ hội"
+        ],
+        "passed": true,
+        "matched": [
+          "cơ hội"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [
+      "cụ thể"
+    ],
+    "word_count": 208,
+    "max_words": 180,
+    "hallucination": false
+  }
+}

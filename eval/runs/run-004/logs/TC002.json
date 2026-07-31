@@ -1,0 +1,90 @@
+{
+  "case_id": "TC002",
+  "timestamp": "2026-07-31T03:43:21.072107+00:00",
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "distribution": "common",
+  "risk_classes": [],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T0984",
+    "note": "Câu hỏi nguyên văn từ học viên."
+  },
+  "input": {
+    "question": "Hãy giải thích về attention mechanism",
+    "day": "day01",
+    "current_slide": "Attention",
+    "level": "beginner",
+    "context_source": "transcript-04-clean.md [T04-054,T04-056]",
+    "context": "Attention cho phép mô hình nhìn toàn bộ câu và chấm mức liên quan giữa các token để tập trung vào phần quan trọng. Multi-head attention dùng nhiều 'con mắt', mỗi head nhận ra một đặc trưng khác nhau rồi tổng hợp lại."
+  },
+  "expected_behavior": "Giải thích attention là cơ chế chấm mức liên quan giữa token và tập trung vào phần quan trọng; có thể dùng ví dụ dễ hiểu.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "liên quan"
+      ],
+      [
+        "token",
+        "từ"
+      ],
+      [
+        "tập trung",
+        "chú ý"
+      ]
+    ],
+    "forbidden_terms": [],
+    "must_ask_clarifying": false,
+    "max_words": 160
+  },
+  "output": "Attention mechanism là một phần quan trọng trong các mô hình học máy, giúp mô hình \"chú ý\" vào những phần quan trọng trong câu. \n\nCách hoạt động của nó như sau: khi mô hình xử lý một câu, nó sẽ xem xét tất cả các từ (token) trong câu và đánh giá độ liên quan của từng từ với nhau. Điều này giống như việc chúng ta đọc một câu và chỉ tập trung vào những từ quan trọng để hiểu ý nghĩa.\n\nMulti-head attention nghĩa là sử dụng nhiều \"con mắt\" (head) khác nhau. Mỗi \"con mắt\" sẽ chú ý vào một đặc điểm khác nhau của các từ. Sau đó, thông tin từ tất cả các \"con mắt\" này được kết hợp lại, giúp mô hình hiểu rõ hơn về ý nghĩa của câu.\n\nTóm lại, attention mechanism giúp mô hình phân biệt các phần quan trọng trong văn bản để có thể đưa ra kết quả tốt hơn.",
+  "error": null,
+  "latency_ms": 3109.73,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": false
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "liên quan"
+        ],
+        "passed": true,
+        "matched": [
+          "liên quan"
+        ]
+      },
+      {
+        "alternatives": [
+          "token",
+          "từ"
+        ],
+        "passed": true,
+        "matched": [
+          "token",
+          "từ"
+        ]
+      },
+      {
+        "alternatives": [
+          "tập trung",
+          "chú ý"
+        ],
+        "passed": true,
+        "matched": [
+          "tập trung",
+          "chú ý"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 162,
+    "max_words": 160,
+    "hallucination": false
+  }
+}

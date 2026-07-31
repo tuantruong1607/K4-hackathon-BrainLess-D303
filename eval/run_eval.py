@@ -20,10 +20,13 @@ DEFAULT_RUN_DIR = ROOT / "eval" / "runs" / "run-001"
 
 sys.path.insert(0, str(AGENT_DIR))
 
-from app.config import settings  # noqa: E402
-from app.graph.nodes.call_llm import call_llm  # noqa: E402
+from app.chat import OpenAIChatProvider  # noqa: E402
+from app.domain import RetrievalResult, RetrievedSlide, SlideChunk  # noqa: E402
 from app.graph.nodes.database_query import UserContext  # noqa: E402
-from app.graph.nodes.retrieval_graph import RetrievedContext  # noqa: E402
+from app.settings import Settings  # noqa: E402
+
+
+settings = Settings()
 
 
 CLARIFICATION_TERMS = (
@@ -125,6 +128,7 @@ def build_metrics(
     results: list[dict[str, Any]],
     started_at: str,
     finished_at: str,
+    run_id: str,
 ) -> dict[str, Any]:
     total = len(results)
     passed = sum(result["grade"]["overall_pass"] for result in results)
@@ -160,7 +164,7 @@ def build_metrics(
     overall_percent = round(passed / total * 100, 2)
     hard_condition_passed = hallucinations == 0
     return {
-        "run_id": "run-001",
+        "run_id": run_id,
         "started_at": started_at,
         "finished_at": finished_at,
         "model_configured": settings.chat_model,
@@ -311,7 +315,7 @@ def write_markdown_report(path: Path, metrics: dict[str, Any], results: list[dic
             "",
             "## Phạm vi phép đo",
             "",
-            "Lượt này gọi thật node sinh câu trả lời `call_llm` của sản phẩm với context được cố định cho từng case. Cách này đo trực tiếp quyết định grounded/clarify/refuse của model nhưng chưa đo recall của Qdrant, Knowledge Graph, database level hay API end-to-end.",
+            "Lượt này gọi thật `OpenAIChatProvider.answer` đang được workflow của branch refactor sử dụng, với context được cố định cho từng case. Cách này đo trực tiếp quyết định grounded/clarify/refuse của model nhưng chưa đo recall của Qdrant, Knowledge Graph, database level hay API end-to-end.",
         ]
     )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -323,7 +327,7 @@ def run(spec_path: Path, run_dir: Path, limit: int | None = None) -> int:
         raise RuntimeError(
             f"Configured CHAT_MODEL={settings.chat_model!r} does not match golden set model={spec['model']!r}"
         )
-    if not settings.openai_api_key:
+    if not settings.openai_api_key.get_secret_value():
         raise RuntimeError("OPENAI_API_KEY is empty in agent/.env")
 
     cases = spec["cases"][:limit] if limit else spec["cases"]
@@ -331,71 +335,79 @@ def run(spec_path: Path, run_dir: Path, limit: int | None = None) -> int:
     logs_dir.mkdir(parents=True, exist_ok=True)
     started_at = datetime.now(timezone.utc).isoformat()
     results: list[dict[str, Any]] = []
+    chat_provider = OpenAIChatProvider(settings)
 
-    for index, case in enumerate(cases, start=1):
-        input_data = case["input"]
-        user_context = UserContext(user_id=1, current_level=input_data["level"])
-        retrieved = RetrievedContext(
-            slide_chunks=[
-                {
-                    "source": input_data["context_source"],
-                    "text": input_data["context"],
-                    "day": input_data["day"],
-                }
-            ]
-        )
-        print(f"[{index:02d}/{len(cases):02d}] running {case['id']}", flush=True)
-        start = time.perf_counter()
-        error: str | None = None
-        try:
-            output = call_llm(
-                question=input_data["question"],
-                level=input_data["level"],
-                user_context=user_context,
-                retrieved=retrieved,
-                current_slide=input_data["current_slide"],
-                current_day=input_data["day"],
+    try:
+        for index, case in enumerate(cases, start=1):
+            input_data = case["input"]
+            user_context = UserContext(user_id=1, current_level=input_data["level"])
+            slide = SlideChunk(
+                document_id=input_data["context_source"],
+                version="eval-v1",
+                day=input_data["day"],
+                slide_number=index,
+                title=input_data["current_slide"] or input_data["context_source"],
+                content=input_data["context"],
             )
-        except Exception as exc:  # noqa: BLE001 - error must be preserved in eval logs
-            output = ""
-            error = f"{type(exc).__name__}: {exc}"
-        latency_ms = round((time.perf_counter() - start) * 1000, 2)
-        grade = grade_output(case, output) if error is None else {
-            "overall_pass": False,
-            "dimensions": {
-                "required_content": False,
-                "forbidden_content_absent": True,
-                "clarification_behavior": False,
-                "conciseness": True,
-            },
-            "required_group_results": [],
-            "forbidden_matches": [],
-            "clarification_matches": [],
-            "word_count": 0,
-            "max_words": case["grading"].get("max_words"),
-            "hallucination": False,
-        }
-        result = {
-            "case_id": case["id"],
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "model": settings.chat_model,
-            "distribution": case["distribution"],
-            "risk_classes": case["risk_classes"],
-            "origin": case["origin"],
-            "input": input_data,
-            "expected_behavior": case["expected_behavior"],
-            "grading_rules": case["grading"],
-            "output": output,
-            "error": error,
-            "latency_ms": latency_ms,
-            "grade": grade,
-        }
-        results.append(result)
-        write_json(logs_dir / f"{case['id']}.json", result)
-        print(f"         {'PASS' if grade['overall_pass'] else 'FAIL'} ({latency_ms} ms)", flush=True)
+            retrieval = RetrievalResult(
+                slides=(RetrievedSlide(chunk=slide, score=1.0),),
+                concepts=(),
+            )
+            print(f"[{index:02d}/{len(cases):02d}] running {case['id']}", flush=True)
+            start = time.perf_counter()
+            error: str | None = None
+            try:
+                output = chat_provider.answer(
+                    question=input_data["question"],
+                    level=input_data["level"],
+                    user_context=user_context,
+                    retrieval=retrieval,
+                    current_slide=None,
+                    current_day=input_data["day"],
+                )
+            except Exception as exc:  # noqa: BLE001 - error must be preserved in eval logs
+                output = ""
+                error = f"{type(exc).__name__}: {exc}"
+            latency_ms = round((time.perf_counter() - start) * 1000, 2)
+            grade = grade_output(case, output) if error is None else {
+                "overall_pass": False,
+                "dimensions": {
+                    "required_content": False,
+                    "forbidden_content_absent": True,
+                    "clarification_behavior": False,
+                    "conciseness": True,
+                },
+                "required_group_results": [],
+                "forbidden_matches": [],
+                "clarification_matches": [],
+                "word_count": 0,
+                "max_words": case["grading"].get("max_words"),
+                "hallucination": False,
+            }
+            result = {
+                "case_id": case["id"],
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "model": settings.chat_model,
+                "provider": chat_provider.provider_name,
+                "distribution": case["distribution"],
+                "risk_classes": case["risk_classes"],
+                "origin": case["origin"],
+                "input": input_data,
+                "expected_behavior": case["expected_behavior"],
+                "grading_rules": case["grading"],
+                "output": output,
+                "error": error,
+                "latency_ms": latency_ms,
+                "grade": grade,
+            }
+            results.append(result)
+            write_json(logs_dir / f"{case['id']}.json", result)
+            print(f"         {'PASS' if grade['overall_pass'] else 'FAIL'} ({latency_ms} ms)", flush=True)
+    finally:
+        chat_provider.close()
 
     finished_at = datetime.now(timezone.utc).isoformat()
-    metrics = build_metrics(spec, results, started_at, finished_at)
+    metrics = build_metrics(spec, results, started_at, finished_at, run_dir.name)
     write_json(run_dir / "metrics.json", metrics)
     with (run_dir / "results.jsonl").open("w", encoding="utf-8") as handle:
         for result in results:
@@ -434,6 +446,7 @@ def regrade(spec_path: Path, run_dir: Path) -> int:
         results,
         prior_metrics["started_at"],
         prior_metrics["finished_at"],
+        run_dir.name,
     )
     metrics["evaluation_audit"] = {
         "regraded_without_new_model_calls": True,

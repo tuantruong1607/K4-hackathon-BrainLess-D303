@@ -1,0 +1,94 @@
+{
+  "case_id": "TC004",
+  "timestamp": "2026-07-31T03:43:28.591852+00:00",
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "distribution": "common",
+  "risk_classes": [],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T1087",
+    "note": "Câu hỏi cụt lủn, trộn tiếng Anh."
+  },
+  "input": {
+    "question": "tool calling là gì",
+    "day": "day02",
+    "current_slide": "Tool calling",
+    "level": "beginner",
+    "context_source": "transcript-03-clean.md [T03-033,T03-034]",
+    "context": "Tool calling là cơ chế để mô hình yêu cầu hệ thống bên ngoài thực thi một hàm/công cụ với tham số cụ thể. Công cụ mới là phần thật sự truy vấn dữ liệu hoặc thực hiện hành động; mô hình đọc kết quả công cụ để tạo câu trả lời."
+  },
+  "expected_behavior": "Nêu model yêu cầu gọi công cụ, công cụ thực thi thật và trả kết quả lại cho model.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "công cụ",
+        "tool"
+      ],
+      [
+        "tham số",
+        "hàm"
+      ],
+      [
+        "kết quả"
+      ]
+    ],
+    "forbidden_terms": [
+      "mô hình tự truy cập trực tiếp"
+    ],
+    "must_ask_clarifying": false,
+    "max_words": 150
+  },
+  "output": "Tool calling là một cơ chế cho phép mô hình yêu cầu một hệ thống bên ngoài thực hiện một chức năng nhất định với các tham số cụ thể. Nói một cách đơn giản, khi mô hình cần thông tin hoặc thực hiện một hành động, nó sẽ \"gọi\" công cụ bên ngoài. Công cụ này sẽ thực hiện yêu cầu và gửi lại kết quả cho mô hình, giúp nó tạo ra câu trả lời chính xác hơn.",
+  "error": null,
+  "latency_ms": 4100.6,
+  "grade": {
+    "overall_pass": true,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": true
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "công cụ",
+          "tool"
+        ],
+        "passed": true,
+        "matched": [
+          "công cụ",
+          "tool"
+        ]
+      },
+      {
+        "alternatives": [
+          "tham số",
+          "hàm"
+        ],
+        "passed": true,
+        "matched": [
+          "tham số",
+          "hàm"
+        ]
+      },
+      {
+        "alternatives": [
+          "kết quả"
+        ],
+        "passed": true,
+        "matched": [
+          "kết quả"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [
+      "cụ thể"
+    ],
+    "word_count": 80,
+    "max_words": 150,
+    "hallucination": false
+  }
+}

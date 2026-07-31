@@ -1,0 +1,115 @@
+{
+  "case_id": "TC024",
+  "timestamp": "2026-07-31T03:44:09.901495+00:00",
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "distribution": "rare",
+  "risk_classes": [
+    "domain_critical"
+  ],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T0098",
+    "note": "Phát triển từ lỗi gõ 'giair' và 'mutilhead' trong chatlog thật."
+  },
+  "input": {
+    "question": "giair thích attension, mutilhead; có phải mỗi head chạy 1 model riêng ko?",
+    "day": "day01",
+    "current_slide": "Multi-head attention",
+    "level": "beginner",
+    "context_source": "transcript-04-clean.md [T04-054,T04-056]",
+    "context": "Attention chấm mức liên quan giữa các token. Multi-head attention có nhiều head cùng xử lý các góc đặc trưng khác nhau rồi tổng hợp; các head là các phép chiếu trong cùng một mô hình, không phải mỗi head là một mô hình độc lập."
+  },
+  "expected_behavior": "Hiểu lỗi chính tả, giải thích attention/multi-head và sửa hiểu lầm rằng mỗi head là một model riêng.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "attention"
+      ],
+      [
+        "liên quan"
+      ],
+      [
+        "nhiều head",
+        "mỗi head"
+      ],
+      [
+        "không",
+        "không phải"
+      ],
+      [
+        "mô hình",
+        "model"
+      ]
+    ],
+    "forbidden_terms": [
+      "mỗi head chạy một model riêng",
+      "mỗi head là một mô hình độc lập"
+    ],
+    "must_ask_clarifying": false,
+    "max_words": 170
+  },
+  "output": "Attention là cách mà mô hình đánh giá mức độ quan trọng giữa các từ (token) trong một câu. Nó giúp xác định từ nào cần chú ý nhiều hơn khi tạo ra nội dung.\n\nMulti-head attention sử dụng nhiều \"head\" khác nhau để xử lý các khía cạnh khác nhau của thông tin cùng một lúc. Tuy nhiên, các head này không độc lập; chúng đều nằm trong cùng một mô hình và chia sẻ thông tin với nhau. Điều này giúp mô hình hiểu tốt hơn về ngữ cảnh và mối liên hệ giữa các từ.",
+  "error": null,
+  "latency_ms": 2344.94,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": false,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": true
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "attention"
+        ],
+        "passed": true,
+        "matched": [
+          "attention"
+        ]
+      },
+      {
+        "alternatives": [
+          "liên quan"
+        ],
+        "passed": false,
+        "matched": []
+      },
+      {
+        "alternatives": [
+          "nhiều head",
+          "mỗi head"
+        ],
+        "passed": false,
+        "matched": []
+      },
+      {
+        "alternatives": [
+          "không",
+          "không phải"
+        ],
+        "passed": true,
+        "matched": [
+          "không"
+        ]
+      },
+      {
+        "alternatives": [
+          "mô hình",
+          "model"
+        ],
+        "passed": true,
+        "matched": [
+          "mô hình"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 98,
+    "max_words": 170,
+    "hallucination": false
+  }
+}

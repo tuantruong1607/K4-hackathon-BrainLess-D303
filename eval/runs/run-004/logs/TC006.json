@@ -1,0 +1,91 @@
+{
+  "case_id": "TC006",
+  "timestamp": "2026-07-31T03:43:32.644424+00:00",
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "distribution": "common",
+  "risk_classes": [],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T0146",
+    "note": "Câu hỏi chỉ gồm hai từ."
+  },
+  "input": {
+    "question": "Chatbot baseline",
+    "day": "day02",
+    "current_slide": "Baseline",
+    "level": "intermediate",
+    "context_source": "transcript-05-clean.md [T05-075,T05-076]",
+    "context": "Baseline là phương án đơn giản dùng làm mốc so sánh trước khi tăng độ phức tạp. Với trợ lý hỏi đáp, chatbot prompt đơn giản có thể là baseline; chỉ thêm RAG, workflow hay agent nếu phép đo cho thấy baseline chưa đáp ứng."
+  },
+  "expected_behavior": "Giải thích chatbot baseline là mốc đơn giản để so sánh và chỉ tăng kiến trúc khi số đo chứng minh cần thiết.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "mốc",
+        "so sánh"
+      ],
+      [
+        "đơn giản"
+      ],
+      [
+        "đo",
+        "đánh giá",
+        "phép đo"
+      ]
+    ],
+    "forbidden_terms": [],
+    "must_ask_clarifying": false,
+    "max_words": 150
+  },
+  "output": "Chatbot baseline là phương pháp cơ bản mà bạn sử dụng để đánh giá hiệu quả của một chatbot trước khi cải tiến nó. Nó giúp bạn có một điểm so sánh rõ ràng. \n\nKhi bạn tạo một chatbot, bạn có thể bắt đầu với một phiên bản đơn giản chỉ trả lời các câu hỏi cơ bản. Đây chính là baseline. Nếu sau khi thử nghiệm, bạn nhận thấy rằng chatbot này không đủ tốt, bạn có thể thêm các tính năng phức tạp hơn như RAG (Retrieval-Augmented Generation), workflow, hoặc agent. \n\nMục tiêu là đảm bảo rằng mỗi lần bạn cải thiện chatbot, bạn đều có thể đo lường xem sự thay đổi đó có mang lại hiệu quả tốt hơn so với baseline hay không.",
+  "error": null,
+  "latency_ms": 2097.03,
+  "grade": {
+    "overall_pass": true,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": true
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "mốc",
+          "so sánh"
+        ],
+        "passed": true,
+        "matched": [
+          "so sánh"
+        ]
+      },
+      {
+        "alternatives": [
+          "đơn giản"
+        ],
+        "passed": true,
+        "matched": [
+          "đơn giản"
+        ]
+      },
+      {
+        "alternatives": [
+          "đo",
+          "đánh giá",
+          "phép đo"
+        ],
+        "passed": true,
+        "matched": [
+          "đo",
+          "đánh giá"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 128,
+    "max_words": 150,
+    "hallucination": false
+  }
+}
