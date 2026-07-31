@@ -1,0 +1,129 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum Level {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  fullname     String
+  role         Role     @default(STUDENT)
+  level        Level    @default(BEGINNER)
+  isBanned     Boolean  @default(false) @map("is_banned")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  quizResults      QuizResult[]
+  learningProgress LearningProgress[]
+
+  @@map("users")
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  quizzesCreated Quiz[]
+
+  @@map("admins")
+}
+
+model Quiz {
+  id         String     @id @default(uuid())
+  title      String
+  day        String
+  difficulty Difficulty @default(MEDIUM)
+  isActive   Boolean    @default(false) @map("is_active")
+  startTime  DateTime?  @map("start_time")
+  endTime    DateTime?  @map("end_time")
+  createdBy  String     @map("created_by")
+  createdAt  DateTime   @default(now()) @map("created_at")
+
+  creator   Admin          @relation(fields: [createdBy], references: [id])
+  questions QuizQuestion[]
+  results   QuizResult[]
+
+  @@map("quizzes")
+}
+
+model QuizQuestion {
+  id            String     @id @default(uuid())
+  quizId        String     @map("quiz_id")
+  question      String
+  optionA       String     @map("option_a")
+  optionB       String     @map("option_b")
+  optionC       String     @map("option_c")
+  optionD       String     @map("option_d")
+  correctAnswer String     @map("correct_answer")
+  difficulty    Difficulty @default(MEDIUM)
+  knowledgeNode String?    @map("knowledge_node")
+
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@map("quiz_questions")
+}
+
+model QuizResult {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  quizId         String   @map("quiz_id")
+  score          Int
+  correctAnswers Int      @map("correct_answers")
+  wrongAnswers   Int      @map("wrong_answers")
+  timeSpent      Int      @map("time_spent")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+  quiz Quiz @relation(fields: [quizId], references: [id])
+
+  @@map("quiz_results")
+}
+
+model LearningProgress {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  day        String
+  slidePage  Int      @default(0) @map("slide_page")
+  completed  Boolean  @default(false)
+  lastAccess DateTime @default(now()) @map("last_access")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, day])
+  @@map("learning_progress")
+}
+
+model SlideDocument {
+  id          String   @id @default(uuid())
+  day         String
+  title       String
+  pdfPath     String   @map("pdf_path")
+  previewPath String?  @map("preview_path")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("slide_documents")
+}
