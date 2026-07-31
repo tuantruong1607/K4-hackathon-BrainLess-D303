@@ -1,4 +1,4 @@
-import prisma from "../config/database.js";
+import { supabaseAdmin } from "../config/supabase.js";
 
 export class DashboardService {
   async getStats() {
@@ -6,100 +6,120 @@ export class DashboardService {
     today.setHours(0, 0, 0, 0);
 
     const [
-      totalUsers,
-      todayActiveUsers,
-      totalQuizzes,
-      avgScoreResult,
-      totalQuestions,
+      { count: totalUsers },
+      { data: todayActiveUsers },
+      { count: totalQuizzes },
+      { data: scores },
+      { count: totalQuestions },
     ] = await Promise.all([
-      prisma.user.count(),
-      prisma.learningProgress.findMany({
-        where: { lastAccess: { gte: today } },
-        select: { userId: true },
-        distinct: ["userId"],
-      }),
-      prisma.quiz.count(),
-      prisma.quizResult.aggregate({
-        _avg: { score: true },
-      }),
-      prisma.quizQuestion.count(),
+      supabaseAdmin.from("users").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("learning_progress").select("user_id").gte("last_access", today.toISOString()),
+      supabaseAdmin.from("quizzes").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("quiz_results").select("score"),
+      supabaseAdmin.from("quiz_questions").select("*", { count: "exact", head: true }),
     ]);
 
-    // _avg.score is null when no results exist — use ?? instead of ||
-    // so that a real score of 0 isn't replaced
-    const avgScore = avgScoreResult._avg.score;
+    const activeUserCount = new Set((todayActiveUsers || []).map((item: any) => item.user_id)).size;
+
+    const avgScore = scores && scores.length > 0
+      ? scores.reduce((acc: number, curr: any) => acc + curr.score, 0) / scores.length
+      : null;
 
     return {
-      totalUsers,
-      todayActive: todayActiveUsers.length,
-      totalQuizzes,
-      totalQuestions,
+      totalUsers: totalUsers || 0,
+      todayActive: activeUserCount,
+      totalQuizzes: totalQuizzes || 0,
+      totalQuestions: totalQuestions || 0,
       averageScore: avgScore !== null ? Math.round(avgScore) : null,
     };
   }
 
   async getProgressOverview() {
-    const progress = await prisma.learningProgress.groupBy({
-      by: ["day"],
-      _count: { userId: true },
-      _avg: { slidePage: true },
-    });
+    const { data: progressList, error } = await supabaseAdmin
+      .from("learning_progress")
+      .select("day, slide_page, completed, user_id");
 
-    const completedByDay = await prisma.learningProgress.groupBy({
-      by: ["day"],
-      where: { completed: true },
-      _count: { userId: true },
-    });
+    if (error) {
+      throw Object.assign(new Error(error.message), { statusCode: 400 });
+    }
 
-    const completedMap = new Map(
-      completedByDay.map((item) => [item.day, item._count.userId])
-    );
+    // Group progress by day in memory
+    const dayGroups = new Map<string, { totalLearners: Set<string>; sumSlidePage: number; completedCount: number }>();
 
-    return progress.map((item) => {
-      const avgPage = item._avg.slidePage;
+    for (const item of (progressList || [])) {
+      if (!dayGroups.has(item.day)) {
+        dayGroups.set(item.day, {
+          totalLearners: new Set(),
+          sumSlidePage: 0,
+          completedCount: 0,
+        });
+      }
+      const group = dayGroups.get(item.day)!;
+      group.totalLearners.add(item.user_id);
+      group.sumSlidePage += item.slide_page || 0;
+      if (item.completed) {
+        group.completedCount += 1;
+      }
+    }
+
+    return Array.from(dayGroups.entries()).map(([day, stats]) => {
+      const learnersCount = stats.totalLearners.size;
+      const avgPage = learnersCount > 0 ? Math.round(stats.sumSlidePage / learnersCount) : 0;
       return {
-        day: item.day,
-        totalLearners: item._count.userId,
-        averageSlidePage: avgPage !== null ? Math.round(avgPage) : 0,
-        completedCount: completedMap.get(item.day) ?? 0,
+        day,
+        totalLearners: learnersCount,
+        averageSlidePage: avgPage,
+        completedCount: stats.completedCount,
       };
     });
   }
 
   async getQuizResultsAnalytics() {
-    const results = await prisma.quizResult.groupBy({
-      by: ["quizId"],
-      _avg: { score: true },
-      _count: { id: true },
-      _min: { score: true },
-      _max: { score: true },
-    });
+    const [
+      { data: results, error: resultsError },
+      { data: quizzes, error: quizzesError }
+    ] = await Promise.all([
+      supabaseAdmin.from("quiz_results").select("id, quiz_id, score"),
+      supabaseAdmin.from("quizzes").select("id, title, day"),
+    ]);
 
-    if (results.length === 0) {
+    if (resultsError || quizzesError) {
+      throw Object.assign(new Error(resultsError?.message || quizzesError?.message), { statusCode: 400 });
+    }
+
+    if (!results || results.length === 0) {
       return [];
     }
 
-    // Get quiz titles
-    const quizIds = results.map((r) => r.quizId);
-    const quizzes = await prisma.quiz.findMany({
-      where: { id: { in: quizIds } },
-      select: { id: true, title: true, day: true },
-    });
+    const quizMap = new Map((quizzes || []).map((q: any) => [q.id, q]));
 
-    const quizMap = new Map(quizzes.map((q) => [q.id, q]));
+    // Group in memory
+    const quizGroups = new Map<string, { scores: number[]; quizId: string }>();
 
-    return results.map((result) => {
-      const quiz = quizMap.get(result.quizId);
-      const avgScore = result._avg.score;
+    for (const res of results) {
+      if (!quizGroups.has(res.quiz_id)) {
+        quizGroups.set(res.quiz_id, { scores: [], quizId: res.quiz_id });
+      }
+      quizGroups.get(res.quiz_id)!.scores.push(res.score);
+    }
+
+    return Array.from(quizGroups.values()).map((group) => {
+      const quiz = quizMap.get(group.quizId);
+      const totalSubmissions = group.scores.length;
+      const sum = group.scores.reduce((a, b) => a + b, 0);
+      const averageScore = totalSubmissions > 0 ? Math.round(sum / totalSubmissions) : 0;
+      const minScore = Math.min(...group.scores);
+      const maxScore = Math.max(...group.scores);
+
       return {
-        quizId: result.quizId,
+        quizId: group.quizId,
         quizTitle: quiz?.title ?? "Unknown",
         day: quiz?.day ?? "Unknown",
-        totalSubmissions: result._count.id,
-        averageScore: avgScore !== null ? Math.round(avgScore) : 0,
-        minScore: result._min.score ?? 0,
-        maxScore: result._max.score ?? 0,
-        };
+        totalSubmissions,
+        averageScore,
+        minScore,
+        maxScore,
+      };
     });
   }
 }

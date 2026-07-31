@@ -1,20 +1,21 @@
 import { Request, Response, NextFunction } from "express";
 import { slideService } from "../services/slide.service.js";
 import { sendSuccess } from "../utils/response.js";
+import { AuthRequest } from "../middleware/auth.js";
 
 export class SlideController {
-  async getAll(_req: Request, res: Response, next: NextFunction) {
+  async getAll(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const slides = await slideService.findAll();
+      const slides = await slideService.findAll(req.supabase!);
       sendSuccess(res, slides, "Slides retrieved");
     } catch (error) {
       next(error);
     }
   }
 
-  async getByDay(req: Request, res: Response, next: NextFunction) {
+  async getByDay(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const slides = await slideService.findByDay(req.params.day as string);
+      const slides = await slideService.findByDay(req.supabase!, req.params.day as string);
       sendSuccess(res, slides, "Slides retrieved");
     } catch (error) {
       next(error);
@@ -36,7 +37,7 @@ export class SlideController {
         day: req.body.day,
         title: req.body.title,
         pdfPath: req.file.filename,
-        previewPath: req.body.previewPath || null,
+        previewPath: req.body.previewPath || undefined,
       });
 
       sendSuccess(res, slide, "Slide uploaded", 201);

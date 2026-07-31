@@ -2,7 +2,7 @@ import { Router } from "express";
 import multer from "multer";
 import path from "path";
 import { slideController } from "../controllers/slide.controller.js";
-import { authenticate } from "../middleware/auth.js";
+import { authenticate, authenticateOptional } from "../middleware/auth.js";
 import { adminOnly } from "../middleware/adminAuth.js";
 import { env } from "../config/env.js";
 
@@ -31,20 +31,20 @@ const upload = multer({
 
 const router = Router();
 
-router.use(authenticate);
-
 // Student + Admin
-router.get("/", slideController.getAll);
-router.get("/day/:day", slideController.getByDay);
+router.get("/", authenticateOptional, slideController.getAll);
+router.get("/day/:day", authenticateOptional, slideController.getByDay);
 
 // Admin only
 router.post(
   "/",
+  authenticate,
   adminOnly,
   upload.single("pdf"),
   slideController.upload
 );
-router.put("/:id", adminOnly, slideController.update);
-router.delete("/:id", adminOnly, slideController.delete);
+router.put("/:id", authenticate, adminOnly, slideController.update);
+router.delete("/:id", authenticate, adminOnly, slideController.delete);
 
 export default router;
+

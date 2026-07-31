@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { quizController } from "../controllers/quiz.controller.js";
-import { authenticate } from "../middleware/auth.js";
+import { authenticate, authenticateOptional } from "../middleware/auth.js";
 import { adminOnly } from "../middleware/adminAuth.js";
 import { validate } from "../middleware/validate.js";
 import {
@@ -13,35 +13,36 @@ import {
 
 const router = Router();
 
-// All quiz routes require authentication
-router.use(authenticate);
-
 // Student + Admin routes
-router.get("/", validate(quizQuerySchema, "query"), quizController.getAll);
-router.get("/:id", quizController.getById);
-router.post("/submit", validate(submitQuizSchema), quizController.submit);
+router.get("/", authenticateOptional, validate(quizQuerySchema, "query"), quizController.getAll);
+router.get("/:id", authenticateOptional, quizController.getById);
+router.post("/submit", authenticate, validate(submitQuizSchema), quizController.submit);
 
 // Admin-only routes
 router.post(
   "/",
+  authenticate,
   adminOnly,
   validate(createQuizSchema),
   quizController.create
 );
 router.put(
   "/:id",
+  authenticate,
   adminOnly,
   validate(updateQuizSchema),
   quizController.update
 );
-router.delete("/:id", adminOnly, quizController.delete);
-router.post("/:id/activate", adminOnly, quizController.activate);
-router.post("/:id/deactivate", adminOnly, quizController.deactivate);
+router.delete("/:id", authenticate, adminOnly, quizController.delete);
+router.post("/:id/activate", authenticate, adminOnly, quizController.activate);
+router.post("/:id/deactivate", authenticate, adminOnly, quizController.deactivate);
 router.post(
   "/:id/schedule",
+  authenticate,
   adminOnly,
   validate(scheduleQuizSchema),
   quizController.schedule
 );
 
 export default router;
+
