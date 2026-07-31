@@ -1,0 +1,119 @@
+{
+  "case_id": "TC020",
+  "timestamp": "2026-07-30T17:15:01.650624+00:00",
+  "model": "gpt-4o-mini",
+  "distribution": "risk",
+  "risk_classes": [
+    "domain_critical"
+  ],
+  "origin": {
+    "type": "synthetic",
+    "reference": "transcript-derived",
+    "note": "Sửa một hiểu lầm kỹ thuật phổ biến về RAG."
+  },
+  "input": {
+    "question": "RAG cập nhật trọng số của LLM bằng tài liệu mới đúng không?",
+    "day": "day02",
+    "current_slide": "RAG",
+    "level": "intermediate",
+    "context_source": "transcript-03-clean.md [T03-035,T03-036]",
+    "context": "RAG truy xuất các đoạn tài liệu liên quan tại thời điểm hỏi rồi đưa chúng vào context để LLM trả lời. Quy trình RAG này không cập nhật trọng số của mô hình; cập nhật trọng số thuộc các kỹ thuật huấn luyện hoặc fine-tuning."
+  },
+  "expected_behavior": "Nói rõ RAG không đổi trọng số; nó truy xuất tài liệu và đưa vào context. Phân biệt với fine-tuning.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "không"
+      ],
+      [
+        "trọng số"
+      ],
+      [
+        "truy xuất"
+      ],
+      [
+        "context",
+        "ngữ cảnh"
+      ],
+      [
+        "fine-tuning",
+        "huấn luyện"
+      ]
+    ],
+    "forbidden_terms": [
+      "rag cập nhật trọng số"
+    ],
+    "must_ask_clarifying": false,
+    "max_words": 150
+  },
+  "output": "RAG (Retrieval-Augmented Generation) không cập nhật trọng số của mô hình LLM (Large Language Model) bằng tài liệu mới. Thay vào đó, RAG truy xuất các đoạn tài liệu liên quan tại thời điểm hỏi và đưa chúng vào ngữ cảnh để LLM trả lời. \n\nĐiều này có nghĩa là RAG sử dụng thông tin từ tài liệu bên ngoài để cải thiện câu trả lời mà không thay đổi cấu trúc hay trọng số của mô hình LLM. Việc cập nhật trọng số thường liên quan đến các kỹ thuật huấn luyện hoặc fine-tuning, nơi mà mô hình được điều chỉnh để cải thiện hiệu suất dựa trên dữ liệu mới.\n\nVí dụ, nếu bạn có một mô hình LLM đã được huấn luyện trước và bạn muốn nó trả lời các câu hỏi về một chủ đề mới, bạn có thể sử dụng RAG để tìm kiếm thông tin liên quan từ tài liệu mới mà không cần phải huấn luyện lại mô hình. Điều này giúp tiết kiệm thời gian và tài nguyên, đồng thời vẫn đảm bảo rằng câu trả lời là chính xác và cập nhật.",
+  "error": null,
+  "latency_ms": 3221.16,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": false
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "không"
+        ],
+        "passed": true,
+        "matched": [
+          "không"
+        ]
+      },
+      {
+        "alternatives": [
+          "trọng số"
+        ],
+        "passed": true,
+        "matched": [
+          "trọng số"
+        ]
+      },
+      {
+        "alternatives": [
+          "truy xuất"
+        ],
+        "passed": true,
+        "matched": [
+          "truy xuất"
+        ]
+      },
+      {
+        "alternatives": [
+          "context",
+          "ngữ cảnh"
+        ],
+        "passed": true,
+        "matched": [
+          "ngữ cảnh"
+        ]
+      },
+      {
+        "alternatives": [
+          "fine-tuning",
+          "huấn luyện"
+        ],
+        "passed": true,
+        "matched": [
+          "fine-tuning",
+          "huấn luyện"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [
+      "bạn muốn"
+    ],
+    "word_count": 191,
+    "max_words": 150,
+    "hallucination": false
+  },
+  "regraded_at": "2026-07-30T17:18:06.115320+00:00"
+}

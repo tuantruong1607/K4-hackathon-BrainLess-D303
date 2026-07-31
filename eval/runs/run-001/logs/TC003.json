@@ -1,0 +1,105 @@
+{
+  "case_id": "TC003",
+  "timestamp": "2026-07-30T17:13:56.136025+00:00",
+  "model": "gpt-4o-mini",
+  "distribution": "common",
+  "risk_classes": [],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T0251",
+    "note": "Câu hỏi nguyên văn, trộn thuật ngữ tiếng Anh."
+  },
+  "input": {
+    "question": "hãy giải thích rõ temperature và top_p",
+    "day": "day01",
+    "current_slide": "Sampling",
+    "level": "intermediate",
+    "context_source": "transcript-04-clean.md [T04-071,T04-072]",
+    "context": "Top-p khoanh vùng các token bằng tổng xác suất tích lũy: top-p=0,5 lấy từ xác suất cao xuống tới khi tổng đạt 50%. Temperature điều chỉnh độ ngẫu nhiên trong vùng đã chọn; temperature càng cao thì lựa chọn càng đa dạng. Temperature=0 ưu tiên token xác suất cao nhất nên kết quả gần như giống nhau."
+  },
+  "expected_behavior": "Phân biệt top-p là cách khoanh vùng token theo xác suất tích lũy, temperature là mức ngẫu nhiên trong vùng đó.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "top-p",
+        "top_p"
+      ],
+      [
+        "tích lũy",
+        "cộng dồn"
+      ],
+      [
+        "temperature"
+      ],
+      [
+        "ngẫu nhiên",
+        "đa dạng"
+      ]
+    ],
+    "forbidden_terms": [],
+    "must_ask_clarifying": false,
+    "max_words": 180
+  },
+  "output": "Trong lĩnh vực học máy, đặc biệt là trong các mô hình sinh ngôn ngữ, \"temperature\" và \"top-p\" là hai khái niệm quan trọng liên quan đến cách mà mô hình chọn lựa từ để tạo ra văn bản.\n\n**1. Temperature:**\nTemperature là một tham số điều chỉnh độ ngẫu nhiên trong quá trình chọn lựa từ. Khi bạn đặt temperature cao (ví dụ: 1.0 hoặc hơn), mô hình sẽ có xu hướng chọn lựa từ một cách ngẫu nhiên hơn, dẫn đến sự đa dạng trong kết quả. Ngược lại, nếu bạn đặt temperature thấp (ví dụ: 0.2), mô hình sẽ ưu tiên chọn những từ có xác suất cao nhất, khiến cho kết quả trở nên giống nhau hơn và ít sáng tạo hơn. \n\n**Ví dụ:** \n- Nếu bạn đang tạo một câu và có các từ với xác suất như sau: \"mèo\" (0.7), \"chó\" (0.2), \"chuột\" (0.1). \n  - Với temperature = 0.2, mô hình có thể sẽ chọn \"mèo\" gần như mọi lần.\n  - Với temperature = 1.0, mô hình có thể chọn \"mèo\", \"chó\" hoặc \"chuột\" với xác suất tương ứng, tạo ra nhiều kết quả khác nhau.\n\n**2. Top-p (hay còn gọi là nucleus sampling):**\nTop-p là một phương pháp để khoanh vùng các từ (token) dựa trên tổng xác suất tích lũy. Cụ thể, bạn sẽ lấy các từ có xác suất cao nhất cho đến khi tổng xác suất đạt một ngưỡng nhất định (p). Ví dụ, nếu bạn đặt top-p = 0.5, mô hình sẽ chọn các từ cho đến khi tổng xác suất của chúng đạt 50%. Điều này giúp loại bỏ những từ có xác suất rất thấp, từ đó tăng khả năng tạo ra các kết quả hợp lý hơn.\n\n**Ví dụ:**\n- Giả sử bạn có các từ với xác suất như sau: \"mèo\" (0.4), \"chó\" (0.3), \"chuột\" (0.2), \"vịt\" (0.1). \n  - Với top-p = 0.5, mô hình sẽ chỉ xem xét \"mèo\" và \"chó\" vì tổng xác suất của chúng (0.4 + 0.3 = 0.7) đã vượt qua 0.5. \"Chuột\" và \"vịt\" sẽ không được xem xét.\n\nKhi kết hợp cả hai tham số này, bạn có thể điều chỉnh độ ngẫu nhiên và sự đa dạng trong kết quả mà mô hình tạo ra, giúp cho việc sinh ngôn ngữ trở nên linh hoạt và sáng tạo hơn.",
+  "error": null,
+  "latency_ms": 7326.12,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": false
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "top-p",
+          "top_p"
+        ],
+        "passed": true,
+        "matched": [
+          "top-p"
+        ]
+      },
+      {
+        "alternatives": [
+          "tích lũy",
+          "cộng dồn"
+        ],
+        "passed": true,
+        "matched": [
+          "tích lũy"
+        ]
+      },
+      {
+        "alternatives": [
+          "temperature"
+        ],
+        "passed": true,
+        "matched": [
+          "temperature"
+        ]
+      },
+      {
+        "alternatives": [
+          "ngẫu nhiên",
+          "đa dạng"
+        ],
+        "passed": true,
+        "matched": [
+          "ngẫu nhiên",
+          "đa dạng"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [
+      "cụ thể"
+    ],
+    "word_count": 392,
+    "max_words": 180,
+    "hallucination": false
+  },
+  "regraded_at": "2026-07-30T17:18:06.105821+00:00"
+}

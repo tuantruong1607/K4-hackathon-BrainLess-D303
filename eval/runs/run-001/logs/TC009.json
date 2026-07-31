@@ -1,0 +1,104 @@
+{
+  "case_id": "TC009",
+  "timestamp": "2026-07-30T17:14:23.721336+00:00",
+  "model": "gpt-4o-mini",
+  "distribution": "common",
+  "risk_classes": [],
+  "origin": {
+    "type": "synthetic",
+    "reference": "transcript-derived",
+    "note": "Case kiến thức cơ bản từ bài giảng."
+  },
+  "input": {
+    "question": "Product manager khác project manager ở điểm nào?",
+    "day": "day02",
+    "current_slide": "Product vs Project",
+    "level": "intermediate",
+    "context_source": "transcript-01-clean.md [T01-009,T01-010,T01-011]",
+    "context": "Project manager tập trung bảo đảm dự án hoàn thành đúng tiến độ, nguồn lực và ngân sách. Product manager đi tìm bài toán/cơ hội đáng làm, định hình sản phẩm và đặt người dùng làm trung tâm; sản phẩm tiếp tục được phát triển sau một lần bàn giao."
+  },
+  "expected_behavior": "So sánh PM dự án về tiến độ/ngân sách với PM sản phẩm về bài toán, user và hướng phát triển.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "tiến độ"
+      ],
+      [
+        "ngân sách",
+        "nguồn lực"
+      ],
+      [
+        "người dùng",
+        "user"
+      ],
+      [
+        "bài toán",
+        "cơ hội"
+      ]
+    ],
+    "forbidden_terms": [],
+    "must_ask_clarifying": false,
+    "max_words": 180
+  },
+  "output": "Product manager và project manager là hai vai trò quan trọng nhưng có những nhiệm vụ và mục tiêu khác nhau trong một tổ chức.\n\n**1. Tập trung vào mục tiêu:**\n- **Project manager** (Quản lý dự án) tập trung vào việc đảm bảo rằng dự án hoàn thành đúng tiến độ, sử dụng nguồn lực hiệu quả và trong ngân sách đã định. Họ quản lý các hoạt động hàng ngày của dự án, theo dõi tiến độ và giải quyết các vấn đề phát sinh.\n- **Product manager** (Quản lý sản phẩm) lại chú trọng vào việc tìm kiếm các cơ hội và bài toán cần giải quyết cho người dùng. Họ định hình sản phẩm, xác định các tính năng cần thiết và đảm bảo rằng sản phẩm đáp ứng nhu cầu của người dùng. Sản phẩm mà họ quản lý thường tiếp tục được phát triển và cải tiến sau mỗi lần bàn giao.\n\n**2. Thời gian và quy trình:**\n- Dự án do project manager quản lý thường có thời gian xác định và kết thúc rõ ràng. Khi dự án hoàn thành, vai trò của project manager cũng kết thúc.\n- Ngược lại, sản phẩm do product manager quản lý có thể tồn tại lâu dài và liên tục được phát triển. Họ phải liên tục lắng nghe phản hồi từ người dùng và điều chỉnh sản phẩm cho phù hợp.\n\n**Ví dụ:**\n- Một project manager có thể quản lý một dự án xây dựng một trang web trong 6 tháng, đảm bảo rằng mọi thứ hoàn thành đúng hạn và trong ngân sách.\n- Trong khi đó, một product manager có thể quản lý một ứng dụng di động, liên tục thu thập phản hồi từ người dùng để cải tiến ứng dụng qua các phiên bản mới, không chỉ dừng lại ở một lần phát hành.\n\nTóm lại, sự khác biệt chính giữa hai vai trò này nằm ở mục tiêu và cách tiếp cận: project manager tập trung vào việc hoàn thành dự án, trong khi product manager tập trung vào việc phát triển và cải tiến sản phẩm để phục vụ người dùng tốt nhất.",
+  "error": null,
+  "latency_ms": 4783.76,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": false
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "tiến độ"
+        ],
+        "passed": true,
+        "matched": [
+          "tiến độ"
+        ]
+      },
+      {
+        "alternatives": [
+          "ngân sách",
+          "nguồn lực"
+        ],
+        "passed": true,
+        "matched": [
+          "ngân sách",
+          "nguồn lực"
+        ]
+      },
+      {
+        "alternatives": [
+          "người dùng",
+          "user"
+        ],
+        "passed": true,
+        "matched": [
+          "người dùng"
+        ]
+      },
+      {
+        "alternatives": [
+          "bài toán",
+          "cơ hội"
+        ],
+        "passed": true,
+        "matched": [
+          "bài toán",
+          "cơ hội"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 366,
+    "max_words": 180,
+    "hallucination": false
+  },
+  "regraded_at": "2026-07-30T17:18:06.109690+00:00"
+}

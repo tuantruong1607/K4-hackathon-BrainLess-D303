@@ -1,0 +1,92 @@
+{
+  "case_id": "TC006",
+  "timestamp": "2026-07-30T17:14:10.428615+00:00",
+  "model": "gpt-4o-mini",
+  "distribution": "common",
+  "risk_classes": [],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T0146",
+    "note": "Câu hỏi chỉ gồm hai từ."
+  },
+  "input": {
+    "question": "Chatbot baseline",
+    "day": "day02",
+    "current_slide": "Baseline",
+    "level": "intermediate",
+    "context_source": "transcript-05-clean.md [T05-075,T05-076]",
+    "context": "Baseline là phương án đơn giản dùng làm mốc so sánh trước khi tăng độ phức tạp. Với trợ lý hỏi đáp, chatbot prompt đơn giản có thể là baseline; chỉ thêm RAG, workflow hay agent nếu phép đo cho thấy baseline chưa đáp ứng."
+  },
+  "expected_behavior": "Giải thích chatbot baseline là mốc đơn giản để so sánh và chỉ tăng kiến trúc khi số đo chứng minh cần thiết.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "mốc",
+        "so sánh"
+      ],
+      [
+        "đơn giản"
+      ],
+      [
+        "đo",
+        "đánh giá",
+        "phép đo"
+      ]
+    ],
+    "forbidden_terms": [],
+    "must_ask_clarifying": false,
+    "max_words": 150
+  },
+  "output": "Chatbot baseline là một phiên bản cơ bản của chatbot, được sử dụng làm mốc so sánh để đánh giá hiệu suất của các phiên bản phức tạp hơn. Trong ngữ cảnh này, baseline có thể là một chatbot chỉ thực hiện các câu hỏi và trả lời đơn giản mà không có các tính năng nâng cao như RAG (Retrieval-Augmented Generation), workflow hay agent.\n\nVí dụ, một chatbot baseline có thể chỉ trả lời các câu hỏi thường gặp (FAQ) mà không có khả năng hiểu ngữ cảnh hay học hỏi từ các cuộc trò chuyện trước đó. Nếu sau khi thử nghiệm, bạn nhận thấy rằng chatbot này không đáp ứng đủ nhu cầu của người dùng, bạn có thể quyết định thêm các tính năng phức tạp hơn để cải thiện hiệu suất.\n\nSo với một chatbot phức tạp, như một chatbot sử dụng RAG, có khả năng truy xuất thông tin từ cơ sở dữ liệu và tạo ra câu trả lời phù hợp hơn, chatbot baseline sẽ đơn giản hơn nhiều và dễ dàng triển khai hơn. Tuy nhiên, việc bắt đầu với một baseline giúp bạn có một điểm khởi đầu rõ ràng để đo lường sự cải tiến khi bạn thêm các tính năng mới.",
+  "error": null,
+  "latency_ms": 5825.43,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": false
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "mốc",
+          "so sánh"
+        ],
+        "passed": true,
+        "matched": [
+          "mốc",
+          "so sánh"
+        ]
+      },
+      {
+        "alternatives": [
+          "đơn giản"
+        ],
+        "passed": true,
+        "matched": [
+          "đơn giản"
+        ]
+      },
+      {
+        "alternatives": [
+          "đo",
+          "đánh giá",
+          "phép đo"
+        ],
+        "passed": true,
+        "matched": [
+          "đo",
+          "đánh giá"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 212,
+    "max_words": 150,
+    "hallucination": false
+  },
+  "regraded_at": "2026-07-30T17:18:06.107727+00:00"
+}

@@ -1,0 +1,77 @@
+{
+  "case_id": "TC023",
+  "timestamp": "2026-07-30T17:15:09.722508+00:00",
+  "model": "gpt-4o-mini",
+  "distribution": "rare",
+  "risk_classes": [
+    "ambiguity",
+    "domain_critical"
+  ],
+  "origin": {
+    "type": "synthetic",
+    "reference": "red-team",
+    "note": "Một câu chứa hai nghĩa của PM, nếu đoán sai sẽ học sai thuật ngữ."
+  },
+  "input": {
+    "question": "PM chịu trách nhiệm gì?",
+    "day": "day02",
+    "current_slide": null,
+    "level": "beginner",
+    "context_source": "transcript-01-clean.md [T01-008,T01-010,T01-011]",
+    "context": "Trong bài, PM có thể viết tắt cho product manager hoặc project manager. Product manager tìm bài toán/cơ hội và định hình sản phẩm theo người dùng; project manager quản lý tiến độ, nguồn lực và ngân sách dự án."
+  },
+  "expected_behavior": "Nêu PM đang mơ hồ giữa product và project manager, hỏi người dùng muốn nghĩa nào, có thể tóm tắt cả hai.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "product manager"
+      ],
+      [
+        "project manager"
+      ]
+    ],
+    "forbidden_terms": [],
+    "must_ask_clarifying": true,
+    "max_words": 150
+  },
+  "output": "PM có thể là viết tắt của hai từ: product manager (quản lý sản phẩm) hoặc project manager (quản lý dự án). Mỗi loại PM có trách nhiệm khác nhau.\n\n1. **Product Manager (Quản lý sản phẩm)**:\n   - Họ tìm kiếm các vấn đề hoặc cơ hội mà sản phẩm có thể giải quyết cho người dùng. \n   - Họ định hình sản phẩm dựa trên nhu cầu của người dùng. Ví dụ, nếu người dùng cần một ứng dụng giúp họ quản lý thời gian tốt hơn, product manager sẽ nghiên cứu và phát triển những tính năng phù hợp cho ứng dụng đó.\n\n2. **Project Manager (Quản lý dự án)**:\n   - Họ quản lý tiến độ của dự án, tức là đảm bảo mọi việc diễn ra đúng thời gian đã định.\n   - Họ cũng quản lý nguồn lực, nghĩa là phân bổ nhân lực và vật lực cần thiết để hoàn thành dự án.\n   - Ngoài ra, họ còn quản lý ngân sách, tức là đảm bảo rằng dự án không vượt quá chi phí đã dự tính. Ví dụ, nếu một dự án xây dựng cần 100 triệu đồng, project manager sẽ theo dõi chi tiêu để không vượt quá số tiền này.\n\nTóm lại, PM có thể là người định hình sản phẩm hoặc người quản lý dự án, tùy thuộc vào vai trò cụ thể của họ trong tổ chức.",
+  "error": null,
+  "latency_ms": 4630.12,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": false,
+      "conciseness": false
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "product manager"
+        ],
+        "passed": true,
+        "matched": [
+          "product manager"
+        ]
+      },
+      {
+        "alternatives": [
+          "project manager"
+        ],
+        "passed": true,
+        "matched": [
+          "project manager"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [
+      "cụ thể"
+    ],
+    "word_count": 235,
+    "max_words": 150,
+    "hallucination": false
+  },
+  "regraded_at": "2026-07-30T17:18:06.116529+00:00"
+}
