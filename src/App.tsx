@@ -72,9 +72,10 @@ function App() {
 
   // Fetch dynamic slides from backend API
   useEffect(() => {
+    const abortController = new AbortController();
     const fetchSlides = async () => {
       try {
-        const res = await apiFetch<any[]>("/slides");
+        const res = await apiFetch<any[]>("/slides", { signal: abortController.signal });
         if (res.data && res.data.length > 0) {
           const mapped = res.data.map((item: any, index: number) => ({
             key: item.day,
@@ -87,7 +88,8 @@ function App() {
           }));
           setSlideDocs(mapped);
         }
-      } catch {
+      } catch (err: any) {
+        if (err.name === "AbortError") return;
         // Fallback to offline defaults if server unavailable (guest mode local fallback)
         setSlideDocs([
           {
@@ -115,7 +117,11 @@ function App() {
       }
     };
     fetchSlides();
-  }, [user, isGuest]);
+
+    return () => {
+      abortController.abort();
+    };
+  }, [user?.id, isGuest]);
 
   // Session timer
   const [sessionSeconds, setSessionSeconds] = useState(0);
@@ -160,11 +166,11 @@ function App() {
   const displayName = user?.fullname ?? "Khách";
   const displayInitials = user
     ? user.fullname
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase()
+      .split(" ")
+      .map((w) => w[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase()
     : "KH";
   const displayRole = user?.role === "ADMIN" ? "Admin" : isGuest ? "Khách" : "Học viên";
   const isAdmin = user?.role === "ADMIN";
