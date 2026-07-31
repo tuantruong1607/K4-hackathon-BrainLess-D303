@@ -2,7 +2,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Sequence
 
-from .chat import ChatProvider, MockChatProvider, OpenAIChatProvider
+from .chat import (
+    ChatProvider,
+    MockChatProvider,
+    OpenAIChatProvider,
+    validate_quiz_questions,
+)
 from .domain import RetrievalResult, SlideInput
 from .errors import (
     AgentError,
@@ -196,12 +201,29 @@ class AgentService:
             day=day,
             limit=max(count, self.settings.retrieval_limit),
         )
-        return self._upstream_call(
+        questions = self._upstream_call(
             self.chat_provider.generate_quiz,
             retrieval=retrieval,
             day=day,
             difficulty=difficulty,
             count=count,
+        )
+        allowed_concepts = [concept.name for concept in retrieval.concepts]
+        if not allowed_concepts:
+            allowed_concepts = sorted(
+                {
+                    concept
+                    for hit in retrieval.slides
+                    for concept in hit.chunk.concepts
+                }
+            )
+        if not allowed_concepts:
+            allowed_concepts = [hit.chunk.title for hit in retrieval.slides]
+        return self._upstream_call(
+            validate_quiz_questions,
+            questions,
+            expected_count=count,
+            allowed_concepts=allowed_concepts,
         )
 
     def analyze_level(self, user_id: int) -> Level:

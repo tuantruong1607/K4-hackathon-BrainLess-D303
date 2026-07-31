@@ -1,133 +1,125 @@
 # VLearn Agent Graph (RAG)
 
-Service AI độc lập (Member 2 trong `CLAUDE.md`) chịu trách nhiệm RAG, Knowledge Graph,
-cá nhân hóa câu trả lời theo level, và sinh câu hỏi quiz. Chạy trên **port 8300**, chỉ được
-gọi bởi Backend (port 8200) — không expose ra ngoài cho frontend.
+FastAPI service for slide-native RAG, learner-level personalization, tutor chat,
+and quiz generation. The Agent listens on port `8300` and is intended to be
+called by the Backend API, not directly by the frontend.
 
-## Stack
+The default runtime is fully offline:
 
-- FastAPI
-- LangGraph + LangChain (graph workflow, OpenAI chat/embeddings)
-- Neo4j (Knowledge Graph)
-- Qdrant (vector store, chạy **local/embedded**, không cần server riêng)
-- PostgreSQL + SQLAlchemy (đọc quiz_results / learning_progress / users — schema do Backend/Member 1 sở hữu)
+| Setting | Default | Live option |
+| --- | --- | --- |
+| `RAG_PROVIDER` | `mock` | `openai` |
+| `RAG_VECTOR_STORE` | `memory` | `qdrant` |
+| `RAG_GRAPH_STORE` | `memory` | `neo4j` |
+| `USER_CONTEXT_PROVIDER` | `mock` | `postgres` |
 
-## Setup
+## Setup with uv
 
-```bash
-cd agent
-python -m venv .venv
-.venv\Scripts\activate        # Windows
-# source .venv/bin/activate   # macOS/Linux
+Run these commands from the workspace root:
 
-pip install -r requirements.txt
-copy .env.example .env        # rồi điền OPENAI_API_KEY thật
+```powershell
+uv venv agent/.venv --python 3.13
+uv pip sync --python agent/.venv/Scripts/python.exe agent/requirements.txt
+uv pip check --python agent/.venv/Scripts/python.exe
+Copy-Item agent/.env.example agent/.env
 ```
 
-### Hạ tầng local (Neo4j + Postgres)
+The checked-in `.env.example` contains no usable credentials. Its default mock
+configuration does not require an API key, Docker, or network access.
 
-```bash
-docker compose up -d
+Start the service:
+
+```powershell
+agent/.venv/Scripts/python.exe -m uvicorn app.main:app --app-dir agent --host 127.0.0.1 --port 8300
 ```
 
-Qdrant không cần container — `qdrant-client` chạy ở chế độ local, lưu vào `agent/data/qdrant/`.
+OpenAPI is available at `http://127.0.0.1:8300/docs`.
 
-### Dữ liệu Postgres cho local dev
+## Live local infrastructure
 
-Schema thật (users, quizzes, quiz_results, learning_progress...) và migrations do **Backend
-(Member 1)** sở hữu qua Alembic. Trước khi có instance dùng chung, script dưới đây tạo bảng +
-seed 1 user mẫu để test `database_query`/`level_analyzer`/`/analyze-level`:
+To use live providers, fill the relevant values in `agent/.env` and select:
 
-```bash
-python scripts/init_local_db.py
+```dotenv
+RAG_PROVIDER=openai
+RAG_VECTOR_STORE=qdrant
+RAG_GRAPH_STORE=neo4j
+USER_CONTEXT_PROVIDER=postgres
 ```
 
-## Build Knowledge Graph + vector index
+`OPENAI_API_KEY`, `NEO4J_PASSWORD`, and `DATABASE_URL` are required when their
+providers are selected. Compose also requires `NEO4J_USERNAME`, `POSTGRES_DB`,
+`POSTGRES_USER`, and `POSTGRES_PASSWORD`.
 
-Thả file `.txt`, `.md`, `.pdf`, `.docx` vào `agent/data/raw/` (tên file bắt đầu bằng `d1`, `d2`,
-`d3`... hoặc chứa `day01`/`day02`/`day03` để suy ra đúng ngày học), rồi chạy:
+Start Qdrant, Neo4j, and PostgreSQL as separate localhost-bound services:
 
-```bash
-python scripts/build_graph.py
+```powershell
+docker compose --env-file agent/.env -f agent/docker-compose.yml up -d
 ```
 
-Script này: nạp slide → chunk → embed vào Qdrant → dùng LLM trích khái niệm (concept) và quan hệ
-cha-con → ghi vào Neo4j.
+The Backend owns the production PostgreSQL schema and migrations. For local
+integration only, the Agent repository includes a schema/seed helper:
 
-## Chạy service
-
-```bash
-uvicorn app.main:app --reload --port 8300
+```powershell
+agent/.venv/Scripts/python.exe agent/scripts/init_local_db.py
 ```
 
-## API contract (đúng theo CLAUDE.md)
+The Agent's PostgreSQL repository enforces read-only statements at runtime.
 
-### `POST /chat`
+## Ingestion
 
-```json
-{ "user_id": 1, "question": "Push là gì?", "day": "day01", "current_slide": "JTBD Foundations" }
+`POST /build-graph` with a typed JSON body is the canonical ingestion contract.
+It indexes one vector record per supplied slide. It does not scan the filesystem
+and it does not split long slide content.
+
+The local file adapter accepts `.pdf`, `.txt`, `.md`, and `.docx` files from
+`RAG_DATA_DIR`. A PDF page becomes one slide; text, Markdown, and DOCX files each
+become one slide. Run the adapter with:
+
+```powershell
+agent/.venv/Scripts/python.exe agent/scripts/build_graph.py
 ```
 
-→ Chạy graph workflow: `database_query → level_analyzer → retrieval_graph → call_llm`.
+See [RAG_README.md](RAG_README.md) for the domain model, indexing semantics,
+retrieval flow, and complete request/response shapes.
 
-```json
-{ "answer": "...", "level": "intermediate" }
+## API
+
+| Endpoint | Purpose |
+| --- | --- |
+| `POST /build-graph` | Replace one document's active slide index |
+| `POST /retrieve` | Return citations and graph concepts for vector hits |
+| `POST /chat` | Run personalized, source-grounded tutor chat |
+| `POST /generate-quiz` | Generate validated four-choice questions from RAG |
+| `POST /analyze-level` | Derive learner level from user context |
+| `POST /embedding` | Return the configured provider's embedding |
+| `GET /health` | Report selected runtime providers |
+
+The workflow order is:
+
+```text
+database_query -> level_analyzer -> retrieval_graph -> call_llm
 ```
 
-### `POST /generate-quiz`
-
-```json
-{ "day": "day01", "difficulty": "medium", "count": 5 }
-```
-
-```json
-{ "questions": [{ "question": "...", "answers": ["A","B","C","D"], "correct_answer": "...", "explanation": "...", "knowledge_node": "JTBD" }] }
-```
-
-### `POST /build-graph`
-
-Không cần body — chạy lại `graph_builder` trên toàn bộ `agent/data/raw/`.
-
-### `POST /analyze-level`
-
-```json
-{ "user_id": 1 }
-```
-→ `{ "level": "beginner" | "intermediate" | "advanced" }`
-
-### `POST /retrieve`
-
-```json
-{ "question": "JTBD là gì?", "day": "day01" }
-```
-→ `{ "slide_chunks": [...], "graph_nodes": [...], "related_nodes": [...] }`
-
-### `POST /embedding`
-
-```json
-{ "text": "Push là gì?" }
-```
-→ `{ "embedding": [0.01, -0.02, ...] }`
-
-Lỗi: `422` khi request sai schema, `502` khi OpenAI/Neo4j/Qdrant/Postgres lỗi.
-
-## Ghi chú thiết kế
-
-- **Không có CORS**: theo kiến trúc, chỉ Backend (8200) gọi Agent (8300) qua REST nội bộ.
-  Frontend không bao giờ gọi thẳng service này.
-- **`knowledge_graph` table trong Postgres** (liệt kê ở phần Database của CLAUDE.md) không được
-  dùng — Agent lưu Knowledge Graph thật trong Neo4j (đúng theo mục Tech Stack của Agent), tránh
-  trùng lặp nguồn dữ liệu.
-- **level_analyzer** hiện dựa trên điểm trung bình quiz gần nhất; schema `quiz_results` chưa có
-  breakdown theo topic nên "Wrong Topic" trong spec chưa tách riêng được, chỉ phản ánh gián tiếp
-  qua điểm số.
+Error mapping is stable: `422` invalid payload, `409` missing index/context,
+`503` invalid live configuration or unavailable dependency, and `502` upstream
+provider/store failure. Public errors do not expose raw exceptions or secrets.
 
 ## Tests
 
-```bash
-pytest
+The default suite runs entirely in mock mode:
+
+```powershell
+agent/.venv/Scripts/python.exe -m pytest agent/tests -v
+agent/.venv/Scripts/python.exe -m compileall -q agent/app agent/scripts
 ```
 
-Toàn bộ test mock LLM/embeddings/DB ở tầng route nên chạy được mà không cần Docker/API key thật.
-Để test thật với dữ liệu thật, dùng các script `scripts/init_local_db.py` + `scripts/build_graph.py`
-sau khi có `docker compose up -d` và `OPENAI_API_KEY` thật.
+Live store tests are marked `integration` and skipped unless explicitly enabled.
+After starting Compose and running `init_local_db.py`:
+
+```powershell
+$env:RUN_AGENT_INTEGRATION="1"
+agent/.venv/Scripts/python.exe -m pytest agent/tests/test_live_integration.py -m integration -v
+```
+
+An OpenAI smoke test is optional and must never be run without an explicitly
+configured key.

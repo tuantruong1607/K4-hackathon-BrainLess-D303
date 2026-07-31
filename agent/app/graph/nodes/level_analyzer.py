@@ -13,8 +13,8 @@ def analyze_level(context: UserContext) -> Level:
 
     Falls back to the persisted users.level when there's no quiz history yet.
     quiz_results only stores aggregate correct/wrong counts (no per-topic
-    breakdown), so "Wrong Topic" from the CLAUDE.md spec isn't factored in
-    beyond what's already reflected in the score.
+    breakdown), so topic-level mistakes are only reflected indirectly in the
+    aggregate score.
     """
     if not context.quiz_history:
         return context.current_level  # type: ignore[return-value]

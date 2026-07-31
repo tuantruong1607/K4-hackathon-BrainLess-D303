@@ -1,10 +1,66 @@
 import json
 from typing import Protocol
 
+from pydantic import BaseModel, Field, model_validator
+
 from .domain import RetrievalResult
 from .graph.nodes.database_query import UserContext
 from .graph.nodes.level_analyzer import Level
 from .settings import Settings
+
+
+class GeneratedQuestion(BaseModel):
+    question: str = Field(min_length=1)
+    answers: list[str] = Field(min_length=4, max_length=4)
+    correct_answer: str = Field(min_length=1)
+    explanation: str = Field(min_length=1)
+    knowledge_node: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_answers(self):
+        normalized = [answer.strip().casefold() for answer in self.answers]
+        if any(not answer for answer in normalized):
+            raise ValueError("answers must not be empty")
+        if len(set(normalized)) != 4:
+            raise ValueError("answers must contain 4 unique choices")
+        if self.correct_answer.strip().casefold() not in normalized:
+            raise ValueError("correct_answer must match one of answers")
+        return self
+
+
+class GeneratedQuizSet(BaseModel):
+    questions: list[GeneratedQuestion]
+
+
+def validate_quiz_questions(
+    questions: list[dict],
+    *,
+    expected_count: int,
+    allowed_concepts: list[str],
+) -> list[dict]:
+    validated = GeneratedQuizSet.model_validate({"questions": questions})
+    if len(validated.questions) != expected_count:
+        raise ValueError(
+            f"quiz provider returned {len(validated.questions)} questions; "
+            f"expected exactly {expected_count}"
+        )
+
+    normalized_concepts = {
+        concept.strip().casefold() for concept in allowed_concepts if concept.strip()
+    }
+    unknown_nodes = sorted(
+        {
+            question.knowledge_node
+            for question in validated.questions
+            if question.knowledge_node.strip().casefold() not in normalized_concepts
+        }
+    )
+    if unknown_nodes:
+        raise ValueError(
+            "quiz provider returned unknown knowledge nodes: "
+            + ", ".join(unknown_nodes)
+        )
+    return [question.model_dump() for question in validated.questions]
 
 
 class ChatProvider(Protocol):

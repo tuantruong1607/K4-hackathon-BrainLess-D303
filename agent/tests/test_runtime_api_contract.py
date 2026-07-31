@@ -147,6 +147,35 @@ def test_raw_upstream_errors_are_502_and_sanitized(monkeypatch) -> None:
     assert "super-secret" not in response.text
 
 
+def test_invalid_quiz_provider_output_is_rejected_as_upstream_failure(
+    monkeypatch,
+) -> None:
+    client, runtime = _client()
+    assert client.post("/build-graph", json=_build_payload()).status_code == 200
+
+    monkeypatch.setattr(
+        runtime.chat_provider,
+        "generate_quiz",
+        lambda **kwargs: [
+            {
+                "question": "Invalid provider question",
+                "answers": ["A", "A", "B", "C"],
+                "correct_answer": "A",
+                "explanation": "Invalid duplicate answers",
+                "knowledge_node": "Unknown",
+            }
+        ],
+    )
+
+    response = client.post(
+        "/generate-quiz",
+        json={"day": "day01", "difficulty": "medium", "count": 1},
+    )
+
+    assert response.status_code == 502
+    assert response.json() == {"detail": "Upstream dependency failed"}
+
+
 def test_lazy_dependency_import_errors_are_503_and_sanitized(monkeypatch) -> None:
     client, runtime = _client()
 
