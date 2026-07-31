@@ -1,0 +1,75 @@
+{
+  "case_id": "TC023",
+  "timestamp": "2026-07-31T03:44:07.554858+00:00",
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "distribution": "rare",
+  "risk_classes": [
+    "ambiguity",
+    "domain_critical"
+  ],
+  "origin": {
+    "type": "synthetic",
+    "reference": "red-team",
+    "note": "Một câu chứa hai nghĩa của PM, nếu đoán sai sẽ học sai thuật ngữ."
+  },
+  "input": {
+    "question": "PM chịu trách nhiệm gì?",
+    "day": "day02",
+    "current_slide": null,
+    "level": "beginner",
+    "context_source": "transcript-01-clean.md [T01-008,T01-010,T01-011]",
+    "context": "Trong bài, PM có thể viết tắt cho product manager hoặc project manager. Product manager tìm bài toán/cơ hội và định hình sản phẩm theo người dùng; project manager quản lý tiến độ, nguồn lực và ngân sách dự án."
+  },
+  "expected_behavior": "Nêu PM đang mơ hồ giữa product và project manager, hỏi người dùng muốn nghĩa nào, có thể tóm tắt cả hai.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "product manager"
+      ],
+      [
+        "project manager"
+      ]
+    ],
+    "forbidden_terms": [],
+    "must_ask_clarifying": true,
+    "max_words": 150
+  },
+  "output": "PM có thể là viết tắt của product manager (quản lý sản phẩm) hoặc project manager (quản lý dự án). \n\n- **Product manager**: Chịu trách nhiệm tìm hiểu các vấn đề hoặc cơ hội trong thị trường và xác định cách sản phẩm sẽ phục vụ nhu cầu của người dùng. Họ tập trung vào việc định hình và phát triển sản phẩm.\n\n- **Project manager**: Chịu trách nhiệm quản lý tiến độ, nguồn lực và ngân sách của một dự án. Họ đảm bảo rằng mọi việc diễn ra đúng lịch và trong phạm vi ngân sách đã định.\n\nVậy nên, PM có thể đảm nhiệm những vai trò khác nhau tùy thuộc vào lĩnh vực làm việc của họ.",
+  "error": null,
+  "latency_ms": 2375.31,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": false,
+      "conciseness": true
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "product manager"
+        ],
+        "passed": true,
+        "matched": [
+          "product manager"
+        ]
+      },
+      {
+        "alternatives": [
+          "project manager"
+        ],
+        "passed": true,
+        "matched": [
+          "project manager"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 121,
+    "max_words": 150,
+    "hallucination": false
+  }
+}

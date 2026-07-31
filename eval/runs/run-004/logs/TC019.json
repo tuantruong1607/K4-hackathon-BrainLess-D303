@@ -1,0 +1,97 @@
+{
+  "case_id": "TC019",
+  "timestamp": "2026-07-31T03:44:00.549358+00:00",
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "distribution": "risk",
+  "risk_classes": [
+    "domain_critical"
+  ],
+  "origin": {
+    "type": "synthetic",
+    "reference": "transcript-derived",
+    "note": "Hiểu sai sampling gây cấu hình sản phẩm không ổn định."
+  },
+  "input": {
+    "question": "Temperature = 0 thì API bảo đảm 100% mọi lần đều ra đúng một output phải không?",
+    "day": "day01",
+    "current_slide": "Temperature",
+    "level": "advanced",
+    "context_source": "transcript-04-clean.md [T04-072,T04-summary]",
+    "context": "Khi temperature bằng 0, mô hình ưu tiên token có xác suất cao nhất nên đầu ra gần như deterministic và kết quả gần như giống nhau giữa các lần chạy. Tài liệu không nói đây là bảo đảm tuyệt đối 100%."
+  },
+  "expected_behavior": "Bác bỏ chữ 'bảo đảm 100%'; nói tài liệu chỉ kết luận gần như deterministic/gần như giống nhau.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "không",
+        "không hẳn",
+        "không thể"
+      ],
+      [
+        "100%",
+        "tuyệt đối",
+        "bảo đảm"
+      ],
+      [
+        "gần như"
+      ]
+    ],
+    "forbidden_terms": [
+      "đúng, temperature = 0 bảo đảm",
+      "chắc chắn mọi lần"
+    ],
+    "must_ask_clarifying": false,
+    "max_words": 140
+  },
+  "output": "Không, khi nhiệt độ (temperature) bằng 0, mô hình sẽ ưu tiên token có xác suất cao nhất, dẫn đến đầu ra gần như deterministic. Tuy nhiên, tài liệu không khẳng định rằng điều này sẽ đảm bảo 100% rằng mọi lần đều cho ra một output giống nhau. Có thể có các yếu tố bên ngoài ảnh hưởng đến kết quả, vậy nên output vẫn có thể có sự thay đổi nhỏ trong các lần chạy khác nhau.",
+  "error": null,
+  "latency_ms": 2355.99,
+  "grade": {
+    "overall_pass": true,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": true
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "không",
+          "không hẳn",
+          "không thể"
+        ],
+        "passed": true,
+        "matched": [
+          "không"
+        ]
+      },
+      {
+        "alternatives": [
+          "100%",
+          "tuyệt đối",
+          "bảo đảm"
+        ],
+        "passed": true,
+        "matched": [
+          "100%"
+        ]
+      },
+      {
+        "alternatives": [
+          "gần như"
+        ],
+        "passed": true,
+        "matched": [
+          "gần như"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 79,
+    "max_words": 140,
+    "hallucination": false
+  }
+}

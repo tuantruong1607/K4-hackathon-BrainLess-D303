@@ -1,0 +1,107 @@
+{
+  "case_id": "TC007",
+  "timestamp": "2026-07-31T03:43:34.838530+00:00",
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "distribution": "common",
+  "risk_classes": [],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T0063",
+    "note": "Thuật ngữ đơn lẻ được hỏi từ slide."
+  },
+  "input": {
+    "question": "deterministic là gì",
+    "day": "day02",
+    "current_slide": "Deterministic",
+    "level": "beginner",
+    "context_source": "transcript-03-clean.md [T03-069,T03-070]",
+    "context": "Deterministic là phần xử lý có quy tắc rõ ràng: cùng một đầu vào và điều kiện sẽ cho cùng một kết quả. Những phép tính hoặc luật kiểm tra chính xác nên viết bằng code/rule thay vì giao cho LLM đoán."
+  },
+  "expected_behavior": "Giải thích deterministic là cùng đầu vào cho cùng kết quả và nên dùng code/rule cho phần chính xác.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "cùng",
+        "giống"
+      ],
+      [
+        "đầu vào",
+        "input"
+      ],
+      [
+        "kết quả",
+        "đầu ra"
+      ],
+      [
+        "code",
+        "rule",
+        "quy tắc"
+      ]
+    ],
+    "forbidden_terms": [],
+    "must_ask_clarifying": false,
+    "max_words": 140
+  },
+  "output": "Deterministic là một phần xử lý mà luôn cho ra cùng một kết quả, khi có cùng một đầu vào và điều kiện. Điều này có nghĩa là nếu bạn làm điều gì đó giống nhau, bạn sẽ nhận được kết quả giống nhau. Các phép tính hoặc quy tắc chính xác nên được lập trình một cách cố định, thay vì để cho một mô hình ngôn ngữ lớn (LLM) tự đoán.",
+  "error": null,
+  "latency_ms": 2192.29,
+  "grade": {
+    "overall_pass": true,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": true
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "cùng",
+          "giống"
+        ],
+        "passed": true,
+        "matched": [
+          "cùng",
+          "giống"
+        ]
+      },
+      {
+        "alternatives": [
+          "đầu vào",
+          "input"
+        ],
+        "passed": true,
+        "matched": [
+          "đầu vào"
+        ]
+      },
+      {
+        "alternatives": [
+          "kết quả",
+          "đầu ra"
+        ],
+        "passed": true,
+        "matched": [
+          "kết quả"
+        ]
+      },
+      {
+        "alternatives": [
+          "code",
+          "rule",
+          "quy tắc"
+        ],
+        "passed": true,
+        "matched": [
+          "quy tắc"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 73,
+    "max_words": 140,
+    "hallucination": false
+  }
+}

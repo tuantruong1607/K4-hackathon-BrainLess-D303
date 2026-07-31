@@ -15,14 +15,27 @@ Batch03-K4-AI-Product-Hackathon/
 Thumbs.db
 
 # Agent (RAG / Graph AI service)
+.venv/
+**/.venv/
+.env
+**/.env
+__pycache__/
+**/__pycache__/
+*.py[cod]
 agent/.venv/
 agent/__pycache__/
 agent/**/__pycache__/
 agent/.env
 agent/data/qdrant/
+agent/data/vector/
+agent/data/vectors/
 agent/data/raw/*
 !agent/data/raw/.gitkeep
 agent/.pytest_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
 
 # Eval runner
 eval/__pycache__/

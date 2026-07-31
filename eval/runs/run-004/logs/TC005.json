@@ -1,0 +1,90 @@
+{
+  "case_id": "TC005",
+  "timestamp": "2026-07-31T03:43:30.546106+00:00",
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "distribution": "common",
+  "risk_classes": [],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T0990",
+    "note": "Một từ tiếng Anh đặt trong câu tiếng Việt."
+  },
+  "input": {
+    "question": "\"Context\" là gì",
+    "day": "day01",
+    "current_slide": "Context",
+    "level": "beginner",
+    "context_source": "transcript-04-clean.md [T04-057,T04-089]",
+    "context": "Context là phần thông tin/ngữ cảnh được đưa vào cùng prompt để mô hình dựa vào khi xử lý yêu cầu. Context có thể gồm nội dung tài liệu, lịch sử hội thoại và dữ liệu bổ sung; quản lý context tốt giúp giữ hiệu năng và giảm chi phí token."
+  },
+  "expected_behavior": "Định nghĩa context là thông tin đi kèm prompt giúp model hiểu và trả lời, kèm một ví dụ.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "thông tin",
+        "ngữ cảnh"
+      ],
+      [
+        "prompt",
+        "yêu cầu"
+      ],
+      [
+        "mô hình",
+        "model"
+      ]
+    ],
+    "forbidden_terms": [],
+    "must_ask_clarifying": false,
+    "max_words": 140
+  },
+  "output": "\"Context\" là thông tin đi kèm với yêu cầu mà mô hình sử dụng để hiểu và xử lý. Nó có thể bao gồm nội dung tài liệu, lịch sử hội thoại và các dữ liệu khác. Việc quản lý context tốt giúp mô hình hoạt động hiệu quả hơn và tiết kiệm chi phí.",
+  "error": null,
+  "latency_ms": 1951.71,
+  "grade": {
+    "overall_pass": true,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": true
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "thông tin",
+          "ngữ cảnh"
+        ],
+        "passed": true,
+        "matched": [
+          "thông tin"
+        ]
+      },
+      {
+        "alternatives": [
+          "prompt",
+          "yêu cầu"
+        ],
+        "passed": true,
+        "matched": [
+          "yêu cầu"
+        ]
+      },
+      {
+        "alternatives": [
+          "mô hình",
+          "model"
+        ],
+        "passed": true,
+        "matched": [
+          "mô hình"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 55,
+    "max_words": 140,
+    "hallucination": false
+  }
+}

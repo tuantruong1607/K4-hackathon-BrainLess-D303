@@ -1,15 +1,16 @@
-from functools import lru_cache
+"""Legacy session helpers without process-global engines or migrations."""
 
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import Session
 
-from app.config import settings
+from app.settings import Settings
 
 
-@lru_cache
-def get_engine() -> Engine:
-    return create_engine(settings.database_url)
+def get_engine(settings: Settings | None = None) -> Engine:
+    selected = settings or Settings()
+    selected.validate_runtime()
+    return create_engine(selected.database_url.get_secret_value())
 
 
-def get_session() -> Session:
-    return Session(get_engine())
+def get_session(settings: Settings | None = None) -> Session:
+    return Session(get_engine(settings))

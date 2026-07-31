@@ -1,0 +1,103 @@
+{
+  "case_id": "TC003",
+  "timestamp": "2026-07-31T03:43:24.489991+00:00",
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "distribution": "common",
+  "risk_classes": [],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T0251",
+    "note": "Câu hỏi nguyên văn, trộn thuật ngữ tiếng Anh."
+  },
+  "input": {
+    "question": "hãy giải thích rõ temperature và top_p",
+    "day": "day01",
+    "current_slide": "Sampling",
+    "level": "intermediate",
+    "context_source": "transcript-04-clean.md [T04-071,T04-072]",
+    "context": "Top-p khoanh vùng các token bằng tổng xác suất tích lũy: top-p=0,5 lấy từ xác suất cao xuống tới khi tổng đạt 50%. Temperature điều chỉnh độ ngẫu nhiên trong vùng đã chọn; temperature càng cao thì lựa chọn càng đa dạng. Temperature=0 ưu tiên token xác suất cao nhất nên kết quả gần như giống nhau."
+  },
+  "expected_behavior": "Phân biệt top-p là cách khoanh vùng token theo xác suất tích lũy, temperature là mức ngẫu nhiên trong vùng đó.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "top-p",
+        "top_p"
+      ],
+      [
+        "tích lũy",
+        "cộng dồn"
+      ],
+      [
+        "temperature"
+      ],
+      [
+        "ngẫu nhiên",
+        "đa dạng"
+      ]
+    ],
+    "forbidden_terms": [],
+    "must_ask_clarifying": false,
+    "max_words": 180
+  },
+  "output": "**Top-p Sampling**: Đây là một cách chọn token (từ) dựa trên tổng xác suất tích lũy. Nếu bạn đặt top-p = 0.5, điều này có nghĩa là bạn sẽ lấy các token từ xác suất cao nhất cho đến khi tổng xác suất đạt 50%. Nói cách khác, bạn chỉ chọn từ một nhóm nhỏ những token có xác suất cao, giúp tăng khả năng chọn lựa những từ phù hợp hơn.\n\n**Temperature**: Đây là tham số giúp điều chỉnh độ ngẫu nhiên trong việc chọn token. Nếu bạn đặt temperature cao (ví dụ: 1.0), lựa chọn sẽ đa dạng hơn và có thể bao gồm cả những token ít phổ biến. Ngược lại, nếu temperature = 0, hệ thống sẽ luôn chọn token có xác suất cao nhất, dẫn đến kết quả gần như giống nhau mỗi lần. \n\nTóm lại, **top-p** giúp xác định phạm vi lựa chọn token, trong khi **temperature** quyết định mức độ ngẫu nhiên trong lựa chọn từ trong phạm vi đó.",
+  "error": null,
+  "latency_ms": 3416.28,
+  "grade": {
+    "overall_pass": true,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": true
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "top-p",
+          "top_p"
+        ],
+        "passed": true,
+        "matched": [
+          "top-p"
+        ]
+      },
+      {
+        "alternatives": [
+          "tích lũy",
+          "cộng dồn"
+        ],
+        "passed": true,
+        "matched": [
+          "tích lũy"
+        ]
+      },
+      {
+        "alternatives": [
+          "temperature"
+        ],
+        "passed": true,
+        "matched": [
+          "temperature"
+        ]
+      },
+      {
+        "alternatives": [
+          "ngẫu nhiên",
+          "đa dạng"
+        ],
+        "passed": true,
+        "matched": [
+          "ngẫu nhiên",
+          "đa dạng"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 167,
+    "max_words": 180,
+    "hallucination": false
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "case_id": "TC016",
+  "timestamp": "2026-07-31T03:43:55.274320+00:00",
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "distribution": "risk",
+  "risk_classes": [
+    "ambiguity"
+  ],
+  "origin": {
+    "type": "synthetic",
+    "reference": "risk-workshop",
+    "note": "Hai đại từ không có đối tượng tham chiếu."
+  },
+  "input": {
+    "question": "cái này khác cái kia sao?",
+    "day": "day01",
+    "current_slide": null,
+    "level": "intermediate",
+    "context_source": "multi-topic-context",
+    "context": "Ngữ cảnh chứa định nghĩa Transformer, attention, temperature và top-p nhưng không có thông tin hai cụm 'cái này' và 'cái kia' đang chỉ mục nào."
+  },
+  "expected_behavior": "Yêu cầu học viên nêu rõ hai khái niệm cần so sánh; không tự chọn cặp.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "hai",
+        "2"
+      ],
+      [
+        "khái niệm",
+        "phần",
+        "nội dung"
+      ]
+    ],
+    "forbidden_terms": [
+      "transformer khác attention ở",
+      "temperature khác top-p ở"
+    ],
+    "must_ask_clarifying": true,
+    "max_words": 100
+  },
+  "output": "Rất tiếc, nhưng từ các nguồn cung cấp, tôi không thể xác định \"cái này\" và \"cái kia\" chỉ đến điều gì. Bạn có thể cung cấp thêm thông tin để tôi có thể giúp bạn hiểu rõ hơn về sự khác nhau giữa chúng không?",
+  "error": null,
+  "latency_ms": 1306.91,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": false,
+      "forbidden_content_absent": true,
+      "clarification_behavior": false,
+      "conciseness": true
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "hai",
+          "2"
+        ],
+        "passed": false,
+        "matched": []
+      },
+      {
+        "alternatives": [
+          "khái niệm",
+          "phần",
+          "nội dung"
+        ],
+        "passed": false,
+        "matched": []
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 46,
+    "max_words": 100,
+    "hallucination": false
+  }
+}

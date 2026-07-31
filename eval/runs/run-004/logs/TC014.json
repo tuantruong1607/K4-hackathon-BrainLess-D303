@@ -1,0 +1,93 @@
+{
+  "case_id": "TC014",
+  "timestamp": "2026-07-31T03:43:50.736696+00:00",
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "distribution": "risk",
+  "risk_classes": [
+    "ambiguity"
+  ],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T0632",
+    "note": "Câu hỏi không dấu và đại từ không có tiền ngữ rõ."
+  },
+  "input": {
+    "question": "toi nen lam gi voi no",
+    "day": "day01",
+    "current_slide": null,
+    "level": "beginner",
+    "context_source": "multi-topic-context",
+    "context": "Ngữ cảnh có ba chủ đề độc lập: attention giúp liên kết token; RAG truy xuất tài liệu; tool calling cho phép hệ thống gọi công cụ."
+  },
+  "expected_behavior": "Hỏi lại 'nó' đang chỉ khái niệm nào và đưa ra các lựa chọn attention/RAG/tool calling; không tự chọn một khái niệm.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "attention"
+      ],
+      [
+        "rag"
+      ],
+      [
+        "tool",
+        "công cụ"
+      ]
+    ],
+    "forbidden_terms": [
+      "bạn nên dùng nó để"
+    ],
+    "must_ask_clarifying": true,
+    "max_words": 120
+  },
+  "output": "Bạn nên tìm hiểu về ba chủ đề này:\n\n1. **Attention**: Đây là kỹ thuật giúp kết nối các từ (token) trong một đoạn văn với nhau, giúp máy tính hiểu mối quan hệ giữa chúng.\n\n2. **RAG (Retrieval-Augmented Generation)**: Đây là phương pháp cho phép hệ thống tra cứu thông tin từ tài liệu bên ngoài để cải thiện khả năng trả lời.\n\n3. **Tool calling**: Đặc tính này cho phép hệ thống gọi hoặc sử dụng các công cụ khác để thực hiện những nhiệm vụ cụ thể.\n\nNếu bạn mới bắt đầu, hãy tìm hiểu từng phần một để hiểu rõ hơn về cách mà các kỹ thuật này hoạt động!",
+  "error": null,
+  "latency_ms": 2417.24,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": false,
+      "conciseness": true
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "attention"
+        ],
+        "passed": true,
+        "matched": [
+          "attention"
+        ]
+      },
+      {
+        "alternatives": [
+          "rag"
+        ],
+        "passed": true,
+        "matched": [
+          "rag"
+        ]
+      },
+      {
+        "alternatives": [
+          "tool",
+          "công cụ"
+        ],
+        "passed": true,
+        "matched": [
+          "tool",
+          "công cụ"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [
+      "cụ thể"
+    ],
+    "word_count": 114,
+    "max_words": 120,
+    "hallucination": false
+  }
+}

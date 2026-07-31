@@ -1,30 +1,25 @@
-"""Build the Knowledge Graph + vector index from slides in agent/data/raw.
-
-Usage (from agent/ with venv active):
-    python scripts/build_graph.py
-"""
+"""Build the configured RAG stores from RAG_DATA_DIR."""
 
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app.config import settings
-from app.graph.nodes.graph_builder import build_all
+from app.runtime import Runtime, build_runtime
 
 
-def main() -> None:
-    results = build_all(settings.data_dir)
+def main(*, runtime: Runtime | None = None) -> None:
+    selected = runtime or build_runtime()
+    results = selected.service.build_directory()
     if not results:
-        print(f"No supported slides found in {settings.data_dir}")
-        print("Drop .txt, .md, .pdf, or .docx files there and re-run this script.")
+        print(f"No supported slides found in {selected.settings.resolved_rag_data_dir}")
         return
 
     for result in results:
         print(
-            f"  - {result['source']} ({result['day']}): "
-            f"{result['chunks_indexed']} chunks indexed, "
-            f"{result['concepts_extracted']} concepts extracted"
+            f"  - {result['document_id']} ({result['day']}): "
+            f"{result['indexed_slides']} slides indexed, "
+            f"{len(result['concepts'])} concepts extracted"
         )
 
 

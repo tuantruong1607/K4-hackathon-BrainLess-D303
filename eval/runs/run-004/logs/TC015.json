@@ -1,0 +1,94 @@
+{
+  "case_id": "TC015",
+  "timestamp": "2026-07-31T03:43:53.964757+00:00",
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "distribution": "risk",
+  "risk_classes": [
+    "ambiguity"
+  ],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T1160",
+    "note": "Câu hỏi chỉ có 'giai thich'."
+  },
+  "input": {
+    "question": "giai thich",
+    "day": "day02",
+    "current_slide": null,
+    "level": "beginner",
+    "context_source": "multi-topic-context",
+    "context": "Trang đang có cả ba mục: Tool Interaction, Memory và Planning. Không có đoạn nào được đánh dấu là phần học viên muốn hỏi."
+  },
+  "expected_behavior": "Hỏi học viên muốn giải thích Tool Interaction, Memory hay Planning; không tự đoán một mục.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "tool interaction",
+        "công cụ"
+      ],
+      [
+        "memory",
+        "bộ nhớ"
+      ],
+      [
+        "planning",
+        "lập kế hoạch"
+      ]
+    ],
+    "forbidden_terms": [],
+    "must_ask_clarifying": true,
+    "max_words": 100
+  },
+  "output": "Xin chào! Để giải thích cho bạn về ba mục trong slide, chúng ta có:\n\n1. **Tool Interaction (Tương tác công cụ)**: Đây là cách mà chúng ta sử dụng các công cụ để hoàn thành một nhiệm vụ. Ví dụ, khi bạn sử dụng một phần mềm, bạn cần biết cách tương tác với nó để làm việc hiệu quả.\n\n2. **Memory (Ký ức)**: Đây là khả năng nhớ và lưu trữ thông tin. Trong học tập, việc ghi nhớ thông tin rất quan trọng để có thể sử dụng nó sau này.\n\n3. **Planning (Lập kế hoạch)**: Đây là quá trình xác định mục tiêu và lên kế hoạch để đạt được những mục tiêu đó. Kế hoạch giúp cho chúng ta có hướng đi rõ ràng và dễ dàng hơn trong việc thực hiện nhiệm vụ.\n\nHy vọng giải thích này giúp bạn hiểu rõ hơn!",
+  "error": null,
+  "latency_ms": 3224.21,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": false,
+      "conciseness": false
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "tool interaction",
+          "công cụ"
+        ],
+        "passed": true,
+        "matched": [
+          "tool interaction",
+          "công cụ"
+        ]
+      },
+      {
+        "alternatives": [
+          "memory",
+          "bộ nhớ"
+        ],
+        "passed": true,
+        "matched": [
+          "memory"
+        ]
+      },
+      {
+        "alternatives": [
+          "planning",
+          "lập kế hoạch"
+        ],
+        "passed": true,
+        "matched": [
+          "planning",
+          "lập kế hoạch"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 149,
+    "max_words": 100,
+    "hallucination": false
+  }
+}

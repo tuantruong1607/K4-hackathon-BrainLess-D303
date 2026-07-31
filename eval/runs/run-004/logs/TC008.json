@@ -1,0 +1,93 @@
+{
+  "case_id": "TC008",
+  "timestamp": "2026-07-31T03:43:36.543007+00:00",
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "distribution": "common",
+  "risk_classes": [],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T0383",
+    "note": "Học viên bôi đúng một thuật ngữ."
+  },
+  "input": {
+    "question": "MVP là gì?",
+    "day": "day02",
+    "current_slide": "MVP",
+    "level": "beginner",
+    "context_source": "transcript-01-clean.md [T01-078,T01-079]",
+    "context": "MVP là phiên bản sản phẩm tối thiểu có đủ giá trị để đưa cho người dùng thật thử, từ đó kiểm chứng giả định quan trọng với ít nguồn lực nhất. MVP không đồng nghĩa với bản làm cẩu thả hay chứa thật nhiều tính năng."
+  },
+  "expected_behavior": "Định nghĩa MVP là phiên bản tối thiểu để kiểm chứng giả định với user thật, không phải bản cẩu thả.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "tối thiểu"
+      ],
+      [
+        "người dùng",
+        "user"
+      ],
+      [
+        "kiểm chứng",
+        "thử nghiệm",
+        "giả định"
+      ]
+    ],
+    "forbidden_terms": [
+      "càng nhiều tính năng càng tốt"
+    ],
+    "must_ask_clarifying": false,
+    "max_words": 140
+  },
+  "output": "MVP là viết tắt của \"Minimum Viable Product,\" nghĩa là sản phẩm tối thiểu khả thi. Đây là phiên bản sản phẩm có đủ giá trị để cho người dùng thực sự dùng thử. Mục tiêu của MVP là kiểm chứng những giả định quan trọng với ít nguồn lực nhất. Nó không có nghĩa là sản phẩm phải được làm cẩu thả hay chứa rất nhiều tính năng, mà là đủ để thu thập phản hồi từ người dùng.",
+  "error": null,
+  "latency_ms": 1702.2,
+  "grade": {
+    "overall_pass": true,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": true
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "tối thiểu"
+        ],
+        "passed": true,
+        "matched": [
+          "tối thiểu"
+        ]
+      },
+      {
+        "alternatives": [
+          "người dùng",
+          "user"
+        ],
+        "passed": true,
+        "matched": [
+          "người dùng"
+        ]
+      },
+      {
+        "alternatives": [
+          "kiểm chứng",
+          "thử nghiệm",
+          "giả định"
+        ],
+        "passed": true,
+        "matched": [
+          "kiểm chứng",
+          "giả định"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 80,
+    "max_words": 140,
+    "hallucination": false
+  }
+}

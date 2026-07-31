@@ -3,23 +3,23 @@ from app.knowledge.loader import Slide
 
 
 def test_split_slide_preserves_source_and_day() -> None:
-    slide = Slide(text="short text", source="d1.pdf", day="day01")
+    slide = Slide("d1.pdf", "v1", "day01", 1, "Slide", "short text")
 
     chunks = split_slide(slide)
 
     assert len(chunks) == 1
-    assert chunks[0].source == "d1.pdf"
+    assert chunks[0].document_id == "d1.pdf"
     assert chunks[0].day == "day01"
     assert chunks[0].chunk_index == 0
 
 
-def test_split_slide_splits_long_text_into_multiple_chunks() -> None:
-    slide = Slide(text="Cau vi du ngan. " * 300, source="long.pdf", day="day02")
+def test_split_slide_keeps_long_source_slide_as_one_chunk() -> None:
+    slide = Slide("long.pdf", "v1", "day02", 1, "Long", "Cau vi du ngan. " * 300)
 
     chunks = split_slide(slide)
 
-    assert len(chunks) > 1
-    assert [chunk.chunk_index for chunk in chunks] == list(range(len(chunks)))
+    assert len(chunks) == 1
+    assert chunks[0].content == slide.content
 
 
 def test_split_slides_handles_empty_list() -> None:

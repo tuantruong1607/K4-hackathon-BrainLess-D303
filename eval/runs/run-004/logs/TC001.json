@@ -1,0 +1,89 @@
+{
+  "case_id": "TC001",
+  "timestamp": "2026-07-31T03:43:17.960786+00:00",
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "distribution": "common",
+  "risk_classes": [],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T0338",
+    "note": "Câu hỏi không dấu, ngắn như tin nhắn thật."
+  },
+  "input": {
+    "question": "agent la gi",
+    "day": "day01",
+    "current_slide": "Agent là gì?",
+    "level": "beginner",
+    "context_source": "transcript-04-clean.md [T04-074]",
+    "context": "AI agent là một hệ thống dùng mô hình làm bộ não và được bổ sung các lớp như công cụ, dữ liệu/ngữ cảnh và bộ nhớ để có thể quan sát, suy luận rồi thực hiện hành động nhằm hoàn thành một nhiệm vụ."
+  },
+  "expected_behavior": "Giải thích ngắn gọn agent là hệ thống có mô hình, công cụ/ngữ cảnh và khả năng hành động; dùng từ dễ hiểu.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "hệ thống"
+      ],
+      [
+        "công cụ",
+        "tool"
+      ],
+      [
+        "hành động",
+        "thực hiện"
+      ]
+    ],
+    "forbidden_terms": [],
+    "must_ask_clarifying": false,
+    "max_words": 140
+  },
+  "output": "Agent là một hệ thống trí tuệ nhân tạo (AI) hoạt động như một \"bộ não\". Nó có thể quan sát, suy luận và thực hiện hành động để hoàn thành một nhiệm vụ. Để làm được điều này, nó sử dụng các công cụ, dữ liệu/ngữ cảnh và bộ nhớ. Nói đơn giản, agent giúp máy tính tự động thực hiện các công việc mà không cần người can thiệp liên tục.",
+  "error": null,
+  "latency_ms": 6337.44,
+  "grade": {
+    "overall_pass": true,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": true
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "hệ thống"
+        ],
+        "passed": true,
+        "matched": [
+          "hệ thống"
+        ]
+      },
+      {
+        "alternatives": [
+          "công cụ",
+          "tool"
+        ],
+        "passed": true,
+        "matched": [
+          "công cụ"
+        ]
+      },
+      {
+        "alternatives": [
+          "hành động",
+          "thực hiện"
+        ],
+        "passed": true,
+        "matched": [
+          "hành động",
+          "thực hiện"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 73,
+    "max_words": 140,
+    "hallucination": false
+  }
+}

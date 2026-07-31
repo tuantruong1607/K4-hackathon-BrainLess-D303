@@ -1,0 +1,117 @@
+{
+  "case_id": "TC020",
+  "timestamp": "2026-07-31T03:44:02.037225+00:00",
+  "model": "gpt-4o-mini",
+  "provider": "openai",
+  "distribution": "risk",
+  "risk_classes": [
+    "domain_critical"
+  ],
+  "origin": {
+    "type": "synthetic",
+    "reference": "transcript-derived",
+    "note": "Sửa một hiểu lầm kỹ thuật phổ biến về RAG."
+  },
+  "input": {
+    "question": "RAG cập nhật trọng số của LLM bằng tài liệu mới đúng không?",
+    "day": "day02",
+    "current_slide": "RAG",
+    "level": "intermediate",
+    "context_source": "transcript-03-clean.md [T03-035,T03-036]",
+    "context": "RAG truy xuất các đoạn tài liệu liên quan tại thời điểm hỏi rồi đưa chúng vào context để LLM trả lời. Quy trình RAG này không cập nhật trọng số của mô hình; cập nhật trọng số thuộc các kỹ thuật huấn luyện hoặc fine-tuning."
+  },
+  "expected_behavior": "Nói rõ RAG không đổi trọng số; nó truy xuất tài liệu và đưa vào context. Phân biệt với fine-tuning.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "không"
+      ],
+      [
+        "trọng số"
+      ],
+      [
+        "truy xuất"
+      ],
+      [
+        "context",
+        "ngữ cảnh"
+      ],
+      [
+        "fine-tuning",
+        "huấn luyện"
+      ]
+    ],
+    "forbidden_terms": [
+      "rag cập nhật trọng số"
+    ],
+    "must_ask_clarifying": false,
+    "max_words": 150
+  },
+  "output": "Không, RAG không cập nhật trọng số của LLM. Thay vào đó, RAG truy xuất các đoạn tài liệu liên quan khi được hỏi và đưa chúng vào ngữ cảnh để LLM trả lời. Việc cập nhật trọng số chỉ xảy ra trong quá trình huấn luyện hoặc fine-tuning, không phải qua RAG.",
+  "error": null,
+  "latency_ms": 1486.49,
+  "grade": {
+    "overall_pass": true,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": true
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "không"
+        ],
+        "passed": true,
+        "matched": [
+          "không"
+        ]
+      },
+      {
+        "alternatives": [
+          "trọng số"
+        ],
+        "passed": true,
+        "matched": [
+          "trọng số"
+        ]
+      },
+      {
+        "alternatives": [
+          "truy xuất"
+        ],
+        "passed": true,
+        "matched": [
+          "truy xuất"
+        ]
+      },
+      {
+        "alternatives": [
+          "context",
+          "ngữ cảnh"
+        ],
+        "passed": true,
+        "matched": [
+          "ngữ cảnh"
+        ]
+      },
+      {
+        "alternatives": [
+          "fine-tuning",
+          "huấn luyện"
+        ],
+        "passed": true,
+        "matched": [
+          "fine-tuning",
+          "huấn luyện"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 53,
+    "max_words": 150,
+    "hallucination": false
+  }
+}
