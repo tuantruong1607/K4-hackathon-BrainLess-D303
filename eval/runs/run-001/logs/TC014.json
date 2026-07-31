@@ -1,0 +1,94 @@
+{
+  "case_id": "TC014",
+  "timestamp": "2026-07-30T17:14:39.808748+00:00",
+  "model": "gpt-4o-mini",
+  "distribution": "risk",
+  "risk_classes": [
+    "ambiguity"
+  ],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T0632",
+    "note": "Câu hỏi không dấu và đại từ không có tiền ngữ rõ."
+  },
+  "input": {
+    "question": "toi nen lam gi voi no",
+    "day": "day01",
+    "current_slide": null,
+    "level": "beginner",
+    "context_source": "multi-topic-context",
+    "context": "Ngữ cảnh có ba chủ đề độc lập: attention giúp liên kết token; RAG truy xuất tài liệu; tool calling cho phép hệ thống gọi công cụ."
+  },
+  "expected_behavior": "Hỏi lại 'nó' đang chỉ khái niệm nào và đưa ra các lựa chọn attention/RAG/tool calling; không tự chọn một khái niệm.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "attention"
+      ],
+      [
+        "rag"
+      ],
+      [
+        "tool",
+        "công cụ"
+      ]
+    ],
+    "forbidden_terms": [
+      "bạn nên dùng nó để"
+    ],
+    "must_ask_clarifying": true,
+    "max_words": 120
+  },
+  "output": "Chào bạn! Mình thấy bạn đang tìm hiểu về một số khái niệm trong học máy. Dù mình không có thông tin cụ thể về slide bạn đang xem, nhưng mình có thể giúp bạn hiểu rõ hơn về các chủ đề mà bạn đã đề cập.\n\n1. **Attention**: Đây là một kỹ thuật giúp máy tính chú ý đến những phần quan trọng trong dữ liệu. Ví dụ, khi bạn đọc một đoạn văn, bạn sẽ chú ý đến những từ khóa để hiểu nội dung chính. Tương tự, trong học máy, attention giúp mô hình xác định những từ nào trong câu là quan trọng nhất để tạo ra kết quả chính xác.\n\n2. **RAG (Retrieval-Augmented Generation)**: Đây là một phương pháp giúp máy tính tìm kiếm thông tin từ tài liệu bên ngoài để trả lời câu hỏi. Bạn có thể tưởng tượng như việc bạn tìm kiếm thông tin trên Internet khi không nhớ rõ một điều gì đó. RAG giúp mô hình có thêm thông tin để đưa ra câu trả lời tốt hơn.\n\n3. **Tool Calling**: Điều này cho phép hệ thống gọi các công cụ khác để thực hiện một nhiệm vụ cụ thể. Ví dụ, nếu bạn cần tính toán một phép toán, hệ thống có thể gọi một công cụ tính toán để giúp bạn.\n\nNếu bạn đang học về những khái niệm này, bạn có thể thử tìm hiểu thêm về cách mà chúng hoạt động trong các ứng dụng thực tế, như trong các trợ lý ảo hay các hệ thống tìm kiếm thông tin. Nếu có câu hỏi cụ thể hơn, bạn cứ hỏi nhé!",
+  "error": null,
+  "latency_ms": 5890.62,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": false,
+      "conciseness": false
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "attention"
+        ],
+        "passed": true,
+        "matched": [
+          "attention"
+        ]
+      },
+      {
+        "alternatives": [
+          "rag"
+        ],
+        "passed": true,
+        "matched": [
+          "rag"
+        ]
+      },
+      {
+        "alternatives": [
+          "tool",
+          "công cụ"
+        ],
+        "passed": true,
+        "matched": [
+          "tool",
+          "công cụ"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [
+      "ý bạn",
+      "cụ thể"
+    ],
+    "word_count": 277,
+    "max_words": 120,
+    "hallucination": false
+  },
+  "regraded_at": "2026-07-30T17:18:06.112461+00:00"
+}

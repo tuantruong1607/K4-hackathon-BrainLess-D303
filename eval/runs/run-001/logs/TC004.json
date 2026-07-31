@@ -1,0 +1,94 @@
+{
+  "case_id": "TC004",
+  "timestamp": "2026-07-30T17:14:01.369177+00:00",
+  "model": "gpt-4o-mini",
+  "distribution": "common",
+  "risk_classes": [],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T1087",
+    "note": "Câu hỏi cụt lủn, trộn tiếng Anh."
+  },
+  "input": {
+    "question": "tool calling là gì",
+    "day": "day02",
+    "current_slide": "Tool calling",
+    "level": "beginner",
+    "context_source": "transcript-03-clean.md [T03-033,T03-034]",
+    "context": "Tool calling là cơ chế để mô hình yêu cầu hệ thống bên ngoài thực thi một hàm/công cụ với tham số cụ thể. Công cụ mới là phần thật sự truy vấn dữ liệu hoặc thực hiện hành động; mô hình đọc kết quả công cụ để tạo câu trả lời."
+  },
+  "expected_behavior": "Nêu model yêu cầu gọi công cụ, công cụ thực thi thật và trả kết quả lại cho model.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "công cụ",
+        "tool"
+      ],
+      [
+        "tham số",
+        "hàm"
+      ],
+      [
+        "kết quả"
+      ]
+    ],
+    "forbidden_terms": [
+      "mô hình tự truy cập trực tiếp"
+    ],
+    "must_ask_clarifying": false,
+    "max_words": 150
+  },
+  "output": "Tool calling là một cách mà mô hình (như AI) có thể yêu cầu một hệ thống bên ngoài thực hiện một công việc nào đó. Bạn có thể tưởng tượng nó giống như khi bạn nhờ một người bạn làm giúp bạn một việc gì đó.\n\nVí dụ, giả sử bạn muốn biết thời tiết hôm nay. Thay vì tự mình tìm kiếm thông tin, bạn có thể \"gọi\" một ứng dụng thời tiết (đó là công cụ) và nhờ nó cung cấp thông tin cho bạn. Ứng dụng sẽ lấy dữ liệu thời tiết và trả lại cho bạn, giúp bạn biết hôm nay trời có mưa hay không.\n\nTrong trường hợp này, mô hình sẽ gửi yêu cầu đến công cụ (ứng dụng thời tiết) với thông tin cần thiết, và sau đó nhận lại kết quả để đưa ra câu trả lời cho bạn. \n\nTóm lại, tool calling là cách mà mô hình sử dụng để tương tác với các công cụ bên ngoài nhằm thực hiện các nhiệm vụ cụ thể.",
+  "error": null,
+  "latency_ms": 5231.35,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": false
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "công cụ",
+          "tool"
+        ],
+        "passed": true,
+        "matched": [
+          "công cụ",
+          "tool"
+        ]
+      },
+      {
+        "alternatives": [
+          "tham số",
+          "hàm"
+        ],
+        "passed": true,
+        "matched": [
+          "hàm"
+        ]
+      },
+      {
+        "alternatives": [
+          "kết quả"
+        ],
+        "passed": true,
+        "matched": [
+          "kết quả"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [
+      "bạn muốn",
+      "cụ thể"
+    ],
+    "word_count": 176,
+    "max_words": 150,
+    "hallucination": false
+  },
+  "regraded_at": "2026-07-30T17:18:06.106493+00:00"
+}

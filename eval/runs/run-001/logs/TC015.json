@@ -1,0 +1,96 @@
+{
+  "case_id": "TC015",
+  "timestamp": "2026-07-30T17:14:45.177998+00:00",
+  "model": "gpt-4o-mini",
+  "distribution": "risk",
+  "risk_classes": [
+    "ambiguity"
+  ],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T1160",
+    "note": "Câu hỏi chỉ có 'giai thich'."
+  },
+  "input": {
+    "question": "giai thich",
+    "day": "day02",
+    "current_slide": null,
+    "level": "beginner",
+    "context_source": "multi-topic-context",
+    "context": "Trang đang có cả ba mục: Tool Interaction, Memory và Planning. Không có đoạn nào được đánh dấu là phần học viên muốn hỏi."
+  },
+  "expected_behavior": "Hỏi học viên muốn giải thích Tool Interaction, Memory hay Planning; không tự đoán một mục.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "tool interaction",
+        "công cụ"
+      ],
+      [
+        "memory",
+        "bộ nhớ"
+      ],
+      [
+        "planning",
+        "lập kế hoạch"
+      ]
+    ],
+    "forbidden_terms": [],
+    "must_ask_clarifying": true,
+    "max_words": 100
+  },
+  "output": "Chào bạn! Mình thấy bạn đang muốn tìm hiểu về các mục như Tool Interaction, Memory và Planning. Mình sẽ giải thích đơn giản từng mục này nhé!\n\n1. **Tool Interaction (Tương tác với công cụ)**: Đây là cách mà bạn sử dụng các công cụ hoặc phần mềm để hoàn thành một nhiệm vụ nào đó. Ví dụ, khi bạn dùng một ứng dụng để ghi chú, bạn đang tương tác với công cụ đó. Bạn có thể viết, chỉnh sửa hoặc xóa ghi chú của mình.\n\n2. **Memory (Ký ức)**: Trong ngữ cảnh học tập, ký ức có thể hiểu là cách mà chúng ta lưu giữ thông tin trong đầu. Ví dụ, khi bạn học một bài học mới, bạn sẽ cố gắng ghi nhớ những điều quan trọng để có thể sử dụng sau này. Giống như khi bạn nhớ tên của một người bạn mới gặp.\n\n3. **Planning (Lập kế hoạch)**: Đây là quá trình bạn chuẩn bị cho những gì sẽ làm trong tương lai. Ví dụ, nếu bạn có một bài kiểm tra vào tuần tới, bạn sẽ lập kế hoạch học tập, chia thời gian ra để ôn tập từng phần. Điều này giúp bạn tổ chức và làm việc hiệu quả hơn.\n\nHy vọng những giải thích này giúp bạn hiểu rõ hơn về các mục này! Nếu bạn có câu hỏi nào khác, đừng ngần ngại hỏi nhé!",
+  "error": null,
+  "latency_ms": 5367.03,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": true,
+      "forbidden_content_absent": true,
+      "clarification_behavior": false,
+      "conciseness": false
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "tool interaction",
+          "công cụ"
+        ],
+        "passed": true,
+        "matched": [
+          "tool interaction",
+          "công cụ"
+        ]
+      },
+      {
+        "alternatives": [
+          "memory",
+          "bộ nhớ"
+        ],
+        "passed": true,
+        "matched": [
+          "memory"
+        ]
+      },
+      {
+        "alternatives": [
+          "planning",
+          "lập kế hoạch"
+        ],
+        "passed": true,
+        "matched": [
+          "planning",
+          "lập kế hoạch"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [
+      "ý bạn"
+    ],
+    "word_count": 238,
+    "max_words": 100,
+    "hallucination": false
+  },
+  "regraded_at": "2026-07-30T17:18:06.113001+00:00"
+}

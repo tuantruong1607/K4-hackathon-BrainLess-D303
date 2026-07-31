@@ -1,0 +1,118 @@
+{
+  "case_id": "TC024",
+  "timestamp": "2026-07-30T17:15:14.553092+00:00",
+  "model": "gpt-4o-mini",
+  "distribution": "rare",
+  "risk_classes": [
+    "domain_critical"
+  ],
+  "origin": {
+    "type": "chatlog",
+    "reference": "T0098",
+    "note": "Phát triển từ lỗi gõ 'giair' và 'mutilhead' trong chatlog thật."
+  },
+  "input": {
+    "question": "giair thích attension, mutilhead; có phải mỗi head chạy 1 model riêng ko?",
+    "day": "day01",
+    "current_slide": "Multi-head attention",
+    "level": "beginner",
+    "context_source": "transcript-04-clean.md [T04-054,T04-056]",
+    "context": "Attention chấm mức liên quan giữa các token. Multi-head attention có nhiều head cùng xử lý các góc đặc trưng khác nhau rồi tổng hợp; các head là các phép chiếu trong cùng một mô hình, không phải mỗi head là một mô hình độc lập."
+  },
+  "expected_behavior": "Hiểu lỗi chính tả, giải thích attention/multi-head và sửa hiểu lầm rằng mỗi head là một model riêng.",
+  "grading_rules": {
+    "required_groups": [
+      [
+        "attention"
+      ],
+      [
+        "liên quan"
+      ],
+      [
+        "nhiều head",
+        "mỗi head"
+      ],
+      [
+        "không",
+        "không phải"
+      ],
+      [
+        "mô hình",
+        "model"
+      ]
+    ],
+    "forbidden_terms": [
+      "mỗi head chạy một model riêng",
+      "mỗi head là một mô hình độc lập"
+    ],
+    "must_ask_clarifying": false,
+    "max_words": 170
+  },
+  "output": "Chào bạn! Hôm nay chúng ta sẽ cùng tìm hiểu về khái niệm \"attention\" và \"multi-head attention\" nhé.\n\n**Attention** là một cách để máy tính có thể tập trung vào những phần quan trọng trong dữ liệu. Bạn có thể tưởng tượng như khi bạn đọc một cuốn sách, bạn sẽ chú ý đến những câu quan trọng hơn là những câu không quan trọng. Trong ngữ cảnh của máy tính, \"token\" là những phần nhỏ của dữ liệu, ví dụ như từ trong một câu. Attention sẽ giúp máy tính đánh giá mức độ quan trọng của từng token trong một câu.\n\n**Multi-head attention** là một bước tiến tiếp theo. Thay vì chỉ có một cách để đánh giá mức độ quan trọng, multi-head attention sử dụng nhiều \"head\" (đầu) khác nhau. Mỗi head sẽ nhìn vào dữ liệu từ một góc độ khác nhau. Bạn có thể hình dung như việc có nhiều người cùng xem một bức tranh, mỗi người sẽ thấy một chi tiết khác nhau. Sau đó, tất cả những thông tin từ các head này sẽ được tổng hợp lại để có cái nhìn tổng quát hơn.\n\nVề câu hỏi của bạn, không phải mỗi head chạy một mô hình riêng biệt. Tất cả các head này đều nằm trong cùng một mô hình và cùng làm việc với nhau để xử lý thông tin. Điều này giúp cho mô hình có thể hiểu dữ liệu một cách sâu sắc hơn.\n\nHy vọng giải thích này giúp bạn hiểu rõ hơn về attention và multi-head attention! Nếu bạn có thêm câu hỏi nào, đừng ngần ngại hỏi nhé!",
+  "error": null,
+  "latency_ms": 4827.83,
+  "grade": {
+    "overall_pass": false,
+    "dimensions": {
+      "required_content": false,
+      "forbidden_content_absent": true,
+      "clarification_behavior": true,
+      "conciseness": false
+    },
+    "required_group_results": [
+      {
+        "alternatives": [
+          "attention"
+        ],
+        "passed": true,
+        "matched": [
+          "attention"
+        ]
+      },
+      {
+        "alternatives": [
+          "liên quan"
+        ],
+        "passed": false,
+        "matched": []
+      },
+      {
+        "alternatives": [
+          "nhiều head",
+          "mỗi head"
+        ],
+        "passed": true,
+        "matched": [
+          "mỗi head"
+        ]
+      },
+      {
+        "alternatives": [
+          "không",
+          "không phải"
+        ],
+        "passed": true,
+        "matched": [
+          "không",
+          "không phải"
+        ]
+      },
+      {
+        "alternatives": [
+          "mô hình",
+          "model"
+        ],
+        "passed": true,
+        "matched": [
+          "mô hình"
+        ]
+      }
+    ],
+    "forbidden_matches": [],
+    "clarification_matches": [],
+    "word_count": 274,
+    "max_words": 170,
+    "hallucination": false
+  },
+  "regraded_at": "2026-07-30T17:18:06.117195+00:00"
+}
