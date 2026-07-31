@@ -300,7 +300,6 @@ def build_runtime(settings: Settings | None = None) -> Runtime:
     if selected.rag_provider == "mock":
         embedding_provider: EmbeddingProvider = MockEmbeddingProvider()
         concept_extractor: ConceptExtractor = DeterministicConceptExtractor()
-        chat_provider: ChatProvider = MockChatProvider()
     else:
         embedding_provider = _construct_dependency(
             OpenAIEmbeddingProvider, selected
@@ -308,6 +307,10 @@ def build_runtime(settings: Settings | None = None) -> Runtime:
         concept_extractor = _construct_dependency(
             OpenAIConceptExtractor, selected
         )
+
+    if selected.selected_chat_provider == "mock":
+        chat_provider: ChatProvider = MockChatProvider()
+    else:
         chat_provider = _construct_dependency(OpenAIChatProvider, selected)
 
     vector_store: VectorStore

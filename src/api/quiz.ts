@@ -38,6 +38,14 @@ export async function getActiveQuizzes(day?: string): Promise<Quiz[]> {
   return res.data;
 }
 
+/** Quizzes uploaded by the admin and available for learners to choose. */
+export async function getQuizzes(day?: string): Promise<Quiz[]> {
+  const params = new URLSearchParams({ limit: "100" });
+  if (day) params.set("day", day);
+  const res = await apiFetch<Quiz[]>(`/quiz?${params}`);
+  return res.data;
+}
+
 export async function getQuizById(id: string): Promise<Quiz> {
   const res = await apiFetch<Quiz>(`/quiz/${id}`);
   return res.data;

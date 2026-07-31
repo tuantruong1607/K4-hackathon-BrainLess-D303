@@ -1,6 +1,6 @@
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "@fontsource-variable/geist";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
@@ -34,24 +34,24 @@ function StudentRoute({ children }: { children: React.ReactNode }) {
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-  if (user.role !== "ADMIN") {
-    return <Navigate to="/" replace />;
+  if (!user || user.role !== "ADMIN") {
+    return <Navigate to="/login?mode=admin" replace />;
   }
   return <>{children}</>;
 }
 
 function LoginRoute() {
   const { user, isGuest } = useAuth();
-  if (user) {
+  const location = useLocation();
+  const adminMode = new URLSearchParams(location.search).get("mode") === "admin";
+
+  if (user && (!adminMode || user.role === "ADMIN")) {
     return <Navigate to={user.role === "ADMIN" ? "/admin" : "/"} replace />;
   }
-  if (isGuest) {
+  if (isGuest && !adminMode) {
     return <Navigate to="/" replace />;
   }
-  return <LoginPage />;
+  return <LoginPage adminMode={adminMode} />;
 }
 
 function Root() {

@@ -6,6 +6,21 @@ export const createQuizSchema = z.object({
   difficulty: z.enum(["EASY", "MEDIUM", "HARD"]).default("MEDIUM"),
   startTime: z.string().datetime().optional().nullable(),
   endTime: z.string().datetime().optional().nullable(),
+  questions: z
+    .array(
+      z.object({
+        question: z.string().min(1, "Question is required"),
+        optionA: z.string().min(1, "Option A is required"),
+        optionB: z.string().min(1, "Option B is required"),
+        optionC: z.string().min(1, "Option C is required"),
+        optionD: z.string().min(1, "Option D is required"),
+        correctAnswer: z.enum(["A", "B", "C", "D"]),
+        difficulty: z.enum(["EASY", "MEDIUM", "HARD"]).default("MEDIUM"),
+        knowledgeNode: z.string().optional().nullable(),
+      })
+    )
+    .max(100)
+    .optional(),
 });
 
 export const updateQuizSchema = z.object({

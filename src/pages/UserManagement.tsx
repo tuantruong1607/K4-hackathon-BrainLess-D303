@@ -245,7 +245,7 @@ export default function UserManagement() {
   const dbRole = roleFilter === "admin" ? "ADMIN" : roleFilter === "learner" ? "STUDENT" : undefined;
 
   // React Query fetching
-  const { data: usersResponse, refetch } = useQuery({
+  const { data: usersResponse = [], refetch } = useQuery({
     queryKey: ["admin", "users", { search, role: dbRole }],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -253,15 +253,15 @@ export default function UserManagement() {
       if (search) params.append("search", search);
       if (dbRole) params.append("role", dbRole);
       
-      const res = await apiFetch<any>(`/users?${params.toString()}`);
+      const res = await apiFetch<any[]>(`/users?${params.toString()}`);
       return res.data;
     },
     staleTime: 5000,
   });
 
   const usersList: User[] = useMemo(() => {
-    if (!usersResponse || !usersResponse.users) return [];
-    return usersResponse.users.map((u: any) => ({
+    if (!Array.isArray(usersResponse)) return [];
+    return usersResponse.map((u: any) => ({
       id: u.id,
       name: u.fullname || "Unknown",
       email: u.email,

@@ -5,6 +5,8 @@ import { adminOnly } from "../middleware/adminAuth.js";
 
 const router = Router();
 
+router.get("/health", authenticateOptional, agentController.health);
+
 // Student can ask AI tutor (optionally authenticated for guests)
 router.post("/ask", authenticateOptional, agentController.ask);
 

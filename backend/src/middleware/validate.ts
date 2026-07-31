@@ -20,8 +20,18 @@ export function validate(
       return;
     }
 
-    // Replace with parsed (and transformed) data
-    (req as any)[target] = result.data;
+    // Express 5 exposes req.query through a getter. Define an own property so
+    // validated/coerced query values can safely shadow that getter.
+    if (target === "query") {
+      Object.defineProperty(req, "query", {
+        value: result.data,
+        configurable: true,
+        enumerable: true,
+        writable: true,
+      });
+    } else {
+      (req as any)[target] = result.data;
+    }
     next();
   };
 }

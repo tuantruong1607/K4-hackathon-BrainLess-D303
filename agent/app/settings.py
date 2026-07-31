@@ -23,6 +23,7 @@ class Settings(BaseSettings):
 
     port: int = 8300
     rag_provider: Literal["mock", "openai"] = "mock"
+    chat_provider: Literal["mock", "openai"] | None = None
     rag_vector_store: Literal["memory", "qdrant"] = "memory"
     rag_graph_store: Literal["memory", "neo4j"] = "memory"
     user_context_provider: Literal["mock", "postgres"] = "mock"
@@ -67,7 +68,10 @@ class Settings(BaseSettings):
     def validate_runtime(self) -> None:
         required: list[tuple[bool, str]] = [
             (
-                self.rag_provider == "openai"
+                (
+                    self.rag_provider == "openai"
+                    or self.selected_chat_provider == "openai"
+                )
                 and not self.openai_api_key.get_secret_value().strip(),
                 "OPENAI_API_KEY",
             ),
@@ -112,6 +116,10 @@ class Settings(BaseSettings):
         if self.rag_data_dir.is_absolute():
             return self.rag_data_dir
         return REPOSITORY_DIR / self.rag_data_dir
+
+    @property
+    def selected_chat_provider(self) -> Literal["mock", "openai"]:
+        return self.chat_provider or self.rag_provider
 
 
 # Compatibility name for the already-canonical index/store adapters.

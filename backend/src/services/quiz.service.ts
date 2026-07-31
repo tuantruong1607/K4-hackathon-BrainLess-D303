@@ -9,12 +9,15 @@ import type {
 } from "../validators/quiz.validator.js";
 
 export class QuizService {
-  async findAll(supabase: SupabaseClient, query: QuizQueryInput) {
+  async findAll(_supabase: SupabaseClient, query: QuizQueryInput) {
     const { page, limit, search, day, difficulty, isActive } = query;
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    let dbQuery = supabase
+    // Quiz metadata is public course content. Use the server client so uploaded
+    // quizzes remain discoverable even when legacy RLS policies only expose
+    // rows marked active. No correct answers are selected here.
+    let dbQuery = supabaseAdmin
       .from("quizzes")
       .select(`
         id, title, day, difficulty, is_active, start_time, end_time, created_by, created_at,
@@ -111,8 +114,10 @@ export class QuizService {
     };
   }
 
-  async findByIdForStudent(supabase: SupabaseClient, id: string) {
-    const { data: quiz, error } = await supabase
+  async findByIdForStudent(_supabase: SupabaseClient, id: string) {
+    // Bypass the legacy "active only" read policy on the server, while the
+    // explicit select below continues to omit correct_answer from the client.
+    const { data: quiz, error } = await supabaseAdmin
       .from("quizzes")
       .select(`
         id, title, day, difficulty, is_active, start_time, end_time, created_by,
@@ -125,12 +130,6 @@ export class QuizService {
 
     if (error || !quiz) {
       throw Object.assign(new Error("Quiz not found"), { statusCode: 404 });
-    }
-
-    if (!quiz.is_active) {
-      throw Object.assign(new Error("Quiz is not currently active"), {
-        statusCode: 403,
-      });
     }
 
     // Format questions (omits correct_answer)
@@ -175,6 +174,33 @@ export class QuizService {
       throw Object.assign(new Error(error.message), { statusCode: 400 });
     }
 
+    if (data.questions?.length) {
+      const { error: questionsError } = await supabase
+        .from("quiz_questions")
+        .insert(
+          data.questions.map((question) => ({
+            quiz_id: quiz.id,
+            question: question.question,
+            option_a: question.optionA,
+            option_b: question.optionB,
+            option_c: question.optionC,
+            option_d: question.optionD,
+            correct_answer: question.correctAnswer,
+            difficulty: question.difficulty,
+            knowledge_node: question.knowledgeNode || null,
+          }))
+        );
+
+      if (questionsError) {
+        // Supabase REST has no cross-request transaction here. Compensate by
+        // deleting the new quiz so users never see a partially-created draft.
+        await supabase.from("quizzes").delete().eq("id", quiz.id);
+        throw Object.assign(new Error(questionsError.message), {
+          statusCode: 400,
+        });
+      }
+    }
+
     return {
       id: quiz.id,
       title: quiz.title,
@@ -185,6 +211,7 @@ export class QuizService {
       endTime: quiz.end_time,
       createdBy: quiz.created_by,
       createdAt: quiz.created_at,
+      _count: { questions: data.questions?.length || 0, results: 0 },
     };
   }
 
@@ -305,18 +332,6 @@ export class QuizService {
 
     if (fetchError || !quiz) {
       throw Object.assign(new Error("Quiz not found"), { statusCode: 404 });
-    }
-
-    if (!quiz.is_active) {
-      throw Object.assign(new Error("Quiz is not active"), { statusCode: 400 });
-    }
-
-    const now = new Date();
-    if (quiz.start_time && now < new Date(quiz.start_time)) {
-      throw Object.assign(new Error("Quiz has not started yet"), { statusCode: 400 });
-    }
-    if (quiz.end_time && now > new Date(quiz.end_time)) {
-      throw Object.assign(new Error("Quiz has ended"), { statusCode: 400 });
     }
 
     // Check if user has already submitted a result using RLS client

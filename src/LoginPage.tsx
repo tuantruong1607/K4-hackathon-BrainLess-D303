@@ -1,9 +1,9 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { GraduationCap, ArrowRight, Eye, EyeSlash, Sparkle } from "@phosphor-icons/react";
 import { useAuth } from "./contexts/AuthContext";
 
-export default function LoginPage() {
-  const { login, register, enterAsGuest } = useAuth();
+export default function LoginPage({ adminMode = false }: { adminMode?: boolean }) {
+  const { user, login, register, enterAsGuest } = useAuth();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -11,6 +11,12 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (adminMode && user && user.role !== "ADMIN") {
+      setError("Tài khoản này không có quyền quản trị. Hãy đăng nhập bằng tài khoản Admin.");
+    }
+  }, [adminMode, user]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -46,14 +52,22 @@ export default function LoginPage() {
           </span>
           <div>
             <strong>vlearn</strong>
-            <small>adaptive classroom</small>
+            <small>{adminMode ? "admin console" : "adaptive classroom"}</small>
           </div>
         </div>
 
         <div className="login-header">
-          <h1>{mode === "login" ? "Chào mừng trở lại" : "Tạo tài khoản mới"}</h1>
+          <h1>
+            {adminMode
+              ? "Đăng nhập quản trị"
+              : mode === "login"
+                ? "Chào mừng trở lại"
+                : "Tạo tài khoản mới"}
+          </h1>
           <p>
-            {mode === "login"
+            {adminMode
+              ? "Sử dụng tài khoản Admin để quản lý quiz, học viên và slide."
+              : mode === "login"
               ? "Đăng nhập để tiếp tục hành trình học tập."
               : "Đăng ký để bắt đầu khám phá."}
           </p>
@@ -62,7 +76,7 @@ export default function LoginPage() {
         {error && <div className="login-error">{error}</div>}
 
         <form className="login-form" onSubmit={handleSubmit}>
-          {mode === "register" && (
+          {!adminMode && mode === "register" && (
             <div className="form-field">
               <label htmlFor="fullname">Họ và tên</label>
               <input
@@ -124,32 +138,36 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="login-divider">
-          <span>hoặc</span>
-        </div>
+        {!adminMode && (
+          <>
+            <div className="login-divider">
+              <span>hoặc</span>
+            </div>
 
-        <button className="guest-button" type="button" onClick={enterAsGuest}>
-          <Sparkle weight="fill" />
-          Tiếp tục với tư cách khách
-        </button>
+            <button className="guest-button" type="button" onClick={enterAsGuest}>
+              <Sparkle weight="fill" />
+              Tiếp tục với tư cách khách
+            </button>
 
-        <p className="login-switch">
-          {mode === "login" ? (
-            <>
-              Chưa có tài khoản?{" "}
-              <button type="button" onClick={() => { setMode("register"); setError(""); }}>
-                Đăng ký ngay
-              </button>
-            </>
-          ) : (
-            <>
-              Đã có tài khoản?{" "}
-              <button type="button" onClick={() => { setMode("login"); setError(""); }}>
-                Đăng nhập
-              </button>
-            </>
-          )}
-        </p>
+            <p className="login-switch">
+              {mode === "login" ? (
+                <>
+                  Chưa có tài khoản?{" "}
+                  <button type="button" onClick={() => { setMode("register"); setError(""); }}>
+                    Đăng ký ngay
+                  </button>
+                </>
+              ) : (
+                <>
+                  Đã có tài khoản?{" "}
+                  <button type="button" onClick={() => { setMode("login"); setError(""); }}>
+                    Đăng nhập
+                  </button>
+                </>
+              )}
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

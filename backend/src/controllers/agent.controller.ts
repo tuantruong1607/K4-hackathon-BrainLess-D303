@@ -4,9 +4,24 @@ import { sendSuccess } from "../utils/response.js";
 import { AuthRequest } from "../middleware/auth.js";
 
 export class AgentController {
+  async health(_req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const result = await agentService.health();
+      sendSuccess(res, result, "AI agent health retrieved");
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async ask(req: AuthRequest, res: Response, next: NextFunction) {
     try {
-      const result = await agentService.chat(req.user!.id, req.body.question);
+      const { question, currentDay, currentSlide } = req.body;
+      const result = await agentService.chat(
+        req.user!.id,
+        question,
+        currentDay,
+        currentSlide,
+      );
       sendSuccess(res, result, "AI response received");
     } catch (error) {
       next(error);

@@ -4,7 +4,6 @@ import { apiFetch } from "../api/apiClient";
 import {
   BookOpen,
   Plus,
-  Square,
   Trash2,
   Clock,
   Users,
@@ -15,7 +14,6 @@ import {
   ChevronUp,
   X,
   AlertTriangle,
-  Zap,
   Eye,
   Copy,
 } from "lucide-react";
@@ -49,19 +47,41 @@ interface Quiz {
   duration: number; // minutes
 }
 
+interface BackendQuiz {
+  id: string;
+  title: string;
+  day: string;
+  difficulty: "EASY" | "MEDIUM" | "HARD";
+  isActive: boolean;
+  startTime: string | null;
+  endTime: string | null;
+  createdAt: string;
+  _count?: { questions: number; results: number };
+}
+
 // ─── Mock data removed (using database) ─────────────────────────
 
 // ─── Config ──────────────────────────────────────────────────
 const STATUS_CONFIG: Record<QuizStatus, { label: string; className: string; dot: string }> = {
-  live:   { label: "Live",   className: "bg-emerald-100 text-emerald-700 border-emerald-200", dot: "bg-emerald-400 animate-ping" },
+  live:   { label: "Available", className: "bg-emerald-100 text-emerald-700 border-emerald-200", dot: "bg-emerald-400" },
   closed: { label: "Closed", className: "bg-slate-100  text-slate-600  border-slate-200",  dot: "bg-slate-400" },
   draft:  { label: "Draft",  className: "bg-amber-100  text-amber-700  border-amber-200",  dot: "bg-amber-400" },
 };
 
 // ─── New Quiz Modal ───────────────────────────────────────────
-function NewQuizModal({ onClose, onAdd }: { onClose: () => void; onAdd: (q: { title: string; lesson: string; duration: number; questions: QuizQuestion[] }) => void }) {
+function NewQuizModal({
+  onClose,
+  onAdd,
+  isSaving,
+  serverError,
+}: {
+  onClose: () => void;
+  onAdd: (q: { title: string; lesson: string; duration: number; questions: QuizQuestion[] }) => void;
+  isSaving: boolean;
+  serverError: string;
+}) {
   const [title, setTitle] = useState("");
-  const [lesson, setLesson] = useState("Ngày 01 — Nền tảng JTBD");
+  const [lesson, setLesson] = useState("day01");
   const [duration, setDuration] = useState(10);
   const [questions, setQuestions] = useState<QuizQuestion[]>([
     { text: "", options: ["", "", "", ""], correct: 0 },
@@ -123,10 +143,10 @@ function NewQuizModal({ onClose, onAdd }: { onClose: () => void; onAdd: (q: { ti
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-          {error && (
+          {(error || serverError) && (
             <div className="flex items-center gap-2 rounded-lg bg-rose-50 border border-rose-200 px-3 py-2.5 text-xs text-rose-700">
               <AlertTriangle size={14} className="shrink-0" />
-              {error}
+              {error || serverError}
             </div>
           )}
 
@@ -150,9 +170,8 @@ function NewQuizModal({ onClose, onAdd }: { onClose: () => void; onAdd: (q: { ti
                 onChange={(e) => setLesson(e.target.value)}
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white transition"
               >
-                <option>Ngày 01 — Nền tảng JTBD</option>
-                <option>Ngày 02 — Phỏng vấn người dùng</option>
-                <option>Ngày 03 — Tổng hợp Insight</option>
+                <option value="day01">Ngày 01 — AI & LLM Foundation</option>
+                <option value="day02">Ngày 02 — Xác định bài toán cho AI</option>
               </select>
             </div>
             <div>
@@ -236,10 +255,11 @@ function NewQuizModal({ onClose, onAdd }: { onClose: () => void; onAdd: (q: { ti
             id="modal-submit-quiz"
             type="button"
             onClick={submit}
-            className="inline-flex items-center gap-2 rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-600 transition"
+            disabled={isSaving}
+            className="inline-flex items-center gap-2 rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-600 transition disabled:cursor-wait disabled:opacity-60"
           >
             <BookOpen size={14} />
-            Save as Draft
+            {isSaving ? "Saving to database…" : "Upload Quiz"}
           </button>
         </div>
       </div>
@@ -251,12 +271,10 @@ function NewQuizModal({ onClose, onAdd }: { onClose: () => void; onAdd: (q: { ti
 // ─── Quiz Card ───────────────────────────────────────────────
 function QuizCard({
   quiz: initialQuiz,
-  onToggleLive,
   onDelete,
   onDuplicate,
 }: {
   quiz: Quiz & { questionsCount?: number };
-  onToggleLive: (id: string) => void;
   onDelete: (id: string) => void;
   onDuplicate: (id: string) => void;
 }) {
@@ -334,7 +352,7 @@ function QuizCard({
         </div>
 
         {/* Avg score */}
-        {initialQuiz.status !== "draft" && initialQuiz.participants > 0 && (
+        {initialQuiz.participants > 0 && (
           <div className="rounded-lg bg-indigo-50 border border-indigo-100 px-4 py-2.5 flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-xs font-medium text-indigo-600">
               <BarChart3 size={13} />
@@ -390,25 +408,7 @@ function QuizCard({
 
         {/* Actions */}
         <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
-          {initialQuiz.status !== "closed" && (
-            <button
-              type="button"
-              id={`btn-toggle-${initialQuiz.id}`}
-              onClick={() => onToggleLive(initialQuiz.id)}
-              className={cn(
-                "flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition",
-                initialQuiz.status === "live"
-                  ? "bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100"
-                  : "bg-emerald-500 text-white shadow-sm hover:bg-emerald-600"
-              )}
-            >
-              {initialQuiz.status === "live" ? (
-                <><Square size={12} /> Stop Live</>
-              ) : (
-                <><Zap size={12} /> Go Live</>
-              )}
-            </button>
-          )}
+          <span className="flex-1 text-xs font-medium text-emerald-600">Available to learners</span>
           <button
             type="button"
             onClick={() => onDuplicate(initialQuiz.id)}
@@ -435,23 +435,33 @@ function QuizCard({
 export default function QuizManagement() {
   const [showModal, setShowModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<QuizStatus | "all">("all");
+  const [operationError, setOperationError] = useState("");
+  const [notice, setNotice] = useState("");
 
-  const { data: quizzesResponse, refetch } = useQuery({
+  const {
+    data: quizzesResponse = [],
+    error: queryError,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useQuery({
     queryKey: ["admin", "quizzes"],
     queryFn: async () => {
-      const res = await apiFetch<any>("/quiz?limit=100");
+      const res = await apiFetch<BackendQuiz[]>("/quiz?limit=100");
       return res.data;
     },
     staleTime: 5000,
   });
 
   const quizzesList: (Quiz & { questionsCount?: number })[] = useMemo(() => {
-    if (!quizzesResponse || !quizzesResponse.quizzes) return [];
-    return quizzesResponse.quizzes.map((q: any) => ({
+    if (!Array.isArray(quizzesResponse)) return [];
+    return quizzesResponse.map((q) => ({
       id: q.id,
       title: q.title,
       lesson: q.day,
-      status: q.isActive ? ("live" as QuizStatus) : ("closed" as QuizStatus),
+      status: q.endTime && new Date(q.endTime) < new Date()
+        ? ("closed" as QuizStatus)
+        : ("live" as QuizStatus),
       questions: [],
       questionsCount: q._count?.questions || 0,
       participants: q._count?.results || 0,
@@ -461,22 +471,16 @@ export default function QuizManagement() {
     }));
   }, [quizzesResponse]);
 
-  const toggleLiveMutation = useMutation({
-    mutationFn: async ({ id, isCurrentlyLive }: { id: string; isCurrentlyLive: boolean }) => {
-      if (isCurrentlyLive) {
-        await apiFetch(`/quiz/${id}/deactivate`, { method: "POST" });
-      } else {
-        await apiFetch(`/quiz/${id}/activate`, { method: "POST" });
-      }
-    },
-    onSuccess: () => refetch(),
-  });
-
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       await apiFetch(`/quiz/${id}`, { method: "DELETE" });
     },
-    onSuccess: () => refetch(),
+    onSuccess: () => {
+      setOperationError("");
+      setNotice("Quiz deleted from the database.");
+      refetch();
+    },
+    onError: (error: Error) => setOperationError(error.message),
   });
 
   const duplicateMutation = useMutation({
@@ -489,30 +493,26 @@ export default function QuizManagement() {
           title: `${original.title} (Copy)`,
           day: original.day,
           difficulty: original.difficulty || "MEDIUM",
+          questions: (original.questions || []).map((q: any) => ({
+            question: q.question,
+            optionA: q.optionA,
+            optionB: q.optionB,
+            optionC: q.optionC,
+            optionD: q.optionD,
+            correctAnswer: q.correctAnswer,
+            difficulty: q.difficulty || "MEDIUM",
+            knowledgeNode: q.knowledgeNode || null,
+          })),
         }),
       });
-      const newQuizId = createRes.data.id;
-      if (original.questions && original.questions.length > 0) {
-        const mappedQuestions = original.questions.map((q: any) => ({
-          question: q.question,
-          optionA: q.optionA,
-          optionB: q.optionB,
-          optionC: q.optionC,
-          optionD: q.optionD,
-          correctAnswer: q.correctAnswer,
-          difficulty: q.difficulty || "MEDIUM",
-          knowledgeNode: q.knowledgeNode || null,
-        }));
-        await apiFetch("/questions/import", {
-          method: "POST",
-          body: JSON.stringify({
-            quizId: newQuizId,
-            questions: mappedQuestions,
-          }),
-        });
-      }
+      return createRes.data;
     },
-    onSuccess: () => refetch(),
+    onSuccess: () => {
+      setOperationError("");
+      setNotice("Quiz and questions duplicated successfully.");
+      refetch();
+    },
+    onError: (error: Error) => setOperationError(error.message),
   });
 
   const addMutation = useMutation({
@@ -523,42 +523,27 @@ export default function QuizManagement() {
           title: newQuiz.title,
           day: newQuiz.lesson,
           difficulty: "MEDIUM",
+          questions: newQuiz.questions.map((q) => ({
+            question: q.text,
+            optionA: q.options[0],
+            optionB: q.options[1],
+            optionC: q.options[2],
+            optionD: q.options[3],
+            correctAnswer: ["A", "B", "C", "D"][q.correct],
+            difficulty: "MEDIUM",
+          })),
         }),
       });
-      const quizId = createRes.data.id;
-      if (newQuiz.questions && newQuiz.questions.length > 0) {
-        const mappedQuestions = newQuiz.questions.map((q) => ({
-          question: q.text,
-          optionA: q.options[0],
-          optionB: q.options[1],
-          optionC: q.options[2],
-          optionD: q.options[3],
-          correctAnswer: q.correct === 0 ? "A" : q.correct === 1 ? "B" : q.correct === 2 ? "C" : "D",
-          difficulty: "MEDIUM",
-        }));
-        await apiFetch("/questions/import", {
-          method: "POST",
-          body: JSON.stringify({
-            quizId,
-            questions: mappedQuestions,
-          }),
-        });
-      }
+      return createRes.data;
     },
     onSuccess: () => {
+      setOperationError("");
+      setNotice("Quiz and all questions were saved to the database.");
       refetch();
       setShowModal(false);
     },
-    onError: (err: any) => {
-      alert(err.message || "Failed to create quiz.");
-    },
+    onError: (error: Error) => setOperationError(error.message),
   });
-
-  const toggleLive = (id: string) => {
-    const q = quizzesList.find((x) => x.id === id);
-    if (!q) return;
-    toggleLiveMutation.mutate({ id, isCurrentlyLive: q.status === "live" });
-  };
 
   const deleteQuiz = (id: string) => {
     deleteMutation.mutate(id);
@@ -573,8 +558,6 @@ export default function QuizManagement() {
     [quizzesList, statusFilter]
   );
 
-  const liveQuiz = quizzesList.find((q) => q.status === "live");
-
   const stats = useMemo(() => ({
     total: quizzesList.length,
     live: quizzesList.filter((q) => q.status === "live").length,
@@ -586,8 +569,13 @@ export default function QuizManagement() {
     <div className="p-6 lg:p-8 space-y-6 animate-fade-in">
       {showModal && (
         <NewQuizModal
-          onClose={() => setShowModal(false)}
+          onClose={() => {
+            setShowModal(false);
+            setOperationError("");
+          }}
           onAdd={(q) => addMutation.mutate(q)}
+          isSaving={addMutation.isPending}
+          serverError={operationError}
         />
       )}
 
@@ -595,12 +583,16 @@ export default function QuizManagement() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Quiz Management</h1>
-          <p className="text-sm text-slate-500 mt-0.5">Create and manage live quiz sessions for learners</p>
+          <p className="text-sm text-slate-500 mt-0.5">Upload quiz content for learners to open when ready</p>
         </div>
         <button
           id="btn-create-quiz"
           type="button"
-          onClick={() => setShowModal(true)}
+          onClick={() => {
+            setOperationError("");
+            setNotice("");
+            setShowModal(true);
+          }}
           className="inline-flex items-center gap-2 rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-600 transition"
         >
           <Plus size={16} />
@@ -608,26 +600,25 @@ export default function QuizManagement() {
         </button>
       </div>
 
-      {/* ── Live banner ───────────────────────────────────────── */}
-      {liveQuiz && (
-        <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 animate-fade-in">
-          <span className="relative flex h-3 w-3 shrink-0">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
+      {(queryError || operationError) && !showModal && (
+        <div className="flex items-start justify-between gap-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <span className="flex items-start gap-2">
+            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+            <span>
+              <strong className="block">Database connection failed</strong>
+              <span className="text-xs">{operationError || (queryError as Error).message}</span>
+            </span>
           </span>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-emerald-800">
-              Live now: <span className="font-bold">{liveQuiz.title}</span>
-            </p>
-            <p className="text-xs text-emerald-600 mt-0.5">{liveQuiz.participants} participants joined · {liveQuiz.lesson}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => toggleLive(liveQuiz.id)}
-            className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-600 transition"
-          >
-            <Square size={11} /> Stop
+          <button type="button" onClick={() => refetch()} className="shrink-0 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-rose-100">
+            Retry
           </button>
+        </div>
+      )}
+
+      {notice && !operationError && (
+        <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <CheckCircle2 size={16} />
+          {notice}
         </div>
       )}
 
@@ -635,7 +626,7 @@ export default function QuizManagement() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "Total Quizzes",      value: stats.total,            color: "text-slate-800" },
-          { label: "Currently Live",     value: stats.live,             color: "text-emerald-600" },
+          { label: "Available to Learners", value: stats.live,          color: "text-emerald-600" },
           { label: "Completed",          value: stats.closed,           color: "text-indigo-600" },
           { label: "Total Participants", value: stats.totalParticipants, color: "text-amber-600" },
         ].map((s) => (
@@ -648,7 +639,7 @@ export default function QuizManagement() {
 
       {/* ── Filter Row ───────────────────────────────────────── */}
       <div className="flex items-center gap-2">
-        {(["all", "live", "draft", "closed"] as const).map((s) => (
+        {(["all", "live", "closed"] as const).map((s) => (
           <button
             key={s}
             type="button"
@@ -661,7 +652,7 @@ export default function QuizManagement() {
                 : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
             )}
           >
-            {s === "all" ? "All" : s.charAt(0).toUpperCase() + s.slice(1)}
+            {s === "all" ? "All" : s === "live" ? "Available" : "Closed"}
             {s !== "all" && (
               <span className="ml-1.5 tabular-nums opacity-70">
                 ({quizzesList.filter((q) => q.status === s).length})
@@ -672,7 +663,18 @@ export default function QuizManagement() {
       </div>
 
       {/* ── Quiz Grid ────────────────────────────────────────── */}
-      {filtered.length === 0 ? (
+      {isLoading || isFetching ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" aria-label="Loading quizzes">
+          {[0, 1, 2].map((item) => (
+            <div key={item} className="h-64 animate-pulse rounded-xl border border-slate-200 bg-white p-5">
+              <div className="h-4 w-2/3 rounded bg-slate-100" />
+              <div className="mt-8 grid grid-cols-3 gap-2">
+                {[0, 1, 2].map((metric) => <div key={metric} className="h-16 rounded-lg bg-slate-100" />)}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-50 mb-4">
             <BookOpen className="h-10 w-10 text-amber-300" />
@@ -690,7 +692,6 @@ export default function QuizManagement() {
             <QuizCard
               key={quiz.id}
               quiz={quiz}
-              onToggleLive={toggleLive}
               onDelete={deleteQuiz}
               onDuplicate={duplicateQuiz}
             />

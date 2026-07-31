@@ -9,6 +9,7 @@ The default runtime is fully offline:
 | Setting | Default | Live option |
 | --- | --- | --- |
 | `RAG_PROVIDER` | `mock` | `openai` |
+| `CHAT_PROVIDER` | inherits `RAG_PROVIDER` | `openai` |
 | `RAG_VECTOR_STORE` | `memory` | `qdrant` |
 | `RAG_GRAPH_STORE` | `memory` | `neo4j` |
 | `USER_CONTEXT_PROVIDER` | `mock` | `postgres` |
@@ -41,6 +42,7 @@ To use live providers, fill the relevant values in `agent/.env` and select:
 
 ```dotenv
 RAG_PROVIDER=openai
+CHAT_PROVIDER=openai
 RAG_VECTOR_STORE=qdrant
 RAG_GRAPH_STORE=neo4j
 USER_CONTEXT_PROVIDER=postgres
@@ -49,6 +51,10 @@ USER_CONTEXT_PROVIDER=postgres
 `OPENAI_API_KEY`, `NEO4J_PASSWORD`, and `DATABASE_URL` are required when their
 providers are selected. Compose also requires `NEO4J_USERNAME`, `POSTGRES_DB`,
 `POSTGRES_USER`, and `POSTGRES_PASSWORD`.
+
+For a lower-data local setup, use `RAG_PROVIDER=mock` and
+`CHAT_PROVIDER=openai`. Indexing then stays local; only the retrieved slide
+excerpts needed for a learner's question are sent to the chat model.
 
 Start Qdrant, Neo4j, and PostgreSQL as separate localhost-bound services:
 

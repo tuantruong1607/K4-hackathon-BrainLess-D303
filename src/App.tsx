@@ -3,7 +3,6 @@ import {
   ArrowRight,
   ArrowsOut,
   BookOpenText,
-  Brain,
   CaretDown,
   Check,
   CheckCircle,
@@ -53,13 +52,14 @@ type ChatMessage = {
   id: number;
   role: "assistant" | "user";
   text: string;
+  status?: "answer" | "error";
+  provider?: string;
+  level?: AgentResponseLevel;
+  sources?: agentApi.AgentCitation[];
+  retryQuestion?: string;
 };
 
-const quickPrompts = [
-  "Cho mình một ví dụ JTBD",
-  "Giải thích push và pull",
-  "Tóm tắt slide này",
-];
+type AgentResponseLevel = "beginner" | "intermediate" | "advanced";
 
 /* ------------------------------------------------------------------ */
 /*  App                                                                */
@@ -450,14 +450,20 @@ function App() {
             </section>
 
             <QuizPanel
-              enabled={quizEnabled}
               activeDay={slideDocs[activeDay]?.key || "day01"}
               isGuest={isGuest}
-              onRequestAdmin={() => setAdminPanelOpen(true)}
             />
           </div>
 
-          <TutorPanel slideIndex={slideIndex} dayTitle={slideDocs[activeDay]?.title || ""} />
+          <TutorPanel
+            slideIndex={slideIndex}
+            dayKey={slideDocs[activeDay]?.key || "day01"}
+            dayTitle={slideDocs[activeDay]?.title || ""}
+            onOpenSlide={(page) => {
+              setPlaying(false);
+              setSlideIndex(Math.max(0, Math.min(numPages - 1, page - 1)));
+            }}
+          />
         </div>
       </main>
     </div>
@@ -548,17 +554,18 @@ function AdminPopover({
 /* ------------------------------------------------------------------ */
 
 function QuizPanel({
-  enabled,
   activeDay,
   isGuest,
-  onRequestAdmin,
 }: {
-  enabled: boolean;
   activeDay: string;
   isGuest: boolean;
-  onRequestAdmin: () => void;
 }) {
   const { user } = useAuth();
+  const [availableQuizzes, setAvailableQuizzes] = useState<quizApi.Quiz[]>([]);
+  const [selectedQuizId, setSelectedQuizId] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [quiz, setQuiz] = useState<quizApi.Quiz | null>(null);
   const [questions, setQuestions] = useState<quizApi.QuizQuestion[]>([]);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -566,65 +573,126 @@ function QuizPanel({
   const [complete, setComplete] = useState(false);
   const [result, setResult] = useState<quizApi.QuizResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [startTime] = useState(() => Date.now());
+  const startTimeRef = useRef(Date.now());
 
-  // Fetch active quiz when enabled
+  // Every quiz uploaded by an admin is available for self-paced practice.
   useEffect(() => {
-    if (!enabled) {
-      setQuiz(null);
-      setQuestions([]);
-      setQuestionIndex(0);
-      setAnswers(new Map());
-      setComplete(false);
-      setResult(null);
-      return;
-    }
-
-    setLoading(true);
+    let mounted = true;
+    setCatalogLoading(true);
+    setLoadError("");
     quizApi
-      .getActiveQuizzes(activeDay)
-      .then(async (quizzes) => {
-        if (quizzes.length > 0) {
-          const fullQuiz = await quizApi.getQuizById(quizzes[0].id);
-          setQuiz(fullQuiz);
-          setQuestions(fullQuiz.questions || []);
-        }
+      .getQuizzes()
+      .then((items) => {
+        if (!mounted) return;
+        const sorted = [...items].sort((a, b) =>
+          a.day === activeDay && b.day !== activeDay
+            ? -1
+            : b.day === activeDay && a.day !== activeDay
+              ? 1
+              : 0,
+        );
+        setAvailableQuizzes(sorted);
+        setSelectedQuizId((current) =>
+          sorted.some((item) => item.id === current) ? current : sorted[0]?.id || "",
+        );
       })
-      .catch(() => {
-        /* fallback to empty */
+      .catch((error: Error) => {
+        if (mounted) setLoadError(error.message || "Không thể tải danh sách quiz.");
       })
+      .finally(() => {
+        if (mounted) setCatalogLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [activeDay]);
+
+  useEffect(() => {
+    if (!isOpen || !selectedQuizId) return;
+    setLoading(true);
+    setLoadError("");
+    quizApi
+      .getQuizById(selectedQuizId)
+      .then((fullQuiz) => {
+        setQuiz(fullQuiz);
+        setQuestions(fullQuiz.questions || []);
+        setQuestionIndex(0);
+        setAnswers(new Map());
+        setComplete(false);
+        setResult(null);
+        startTimeRef.current = Date.now();
+      })
+      .catch((error: Error) => setLoadError(error.message || "Không thể mở quiz."))
       .finally(() => setLoading(false));
-  }, [enabled, activeDay]);
+  }, [isOpen, selectedQuizId]);
+
+  useEffect(() => {
+    document.body.classList.toggle("quiz-mode-open", isOpen);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.classList.remove("quiz-mode-open");
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
 
   const score = useMemo(() => {
     if (!result) return 0;
     return result.correctAnswers;
   }, [result]);
 
-  if (!enabled) {
+  if (!isOpen) {
     return (
-      <section className="quiz-panel quiz-locked" aria-labelledby="quiz-title">
+      <section className="quiz-panel quiz-launcher" aria-labelledby="quiz-title">
         <div className="quiz-lock-icon">
-          <LockKey weight="fill" />
+          <GraduationCap weight="fill" />
         </div>
         <div className="quiz-lock-copy">
-          <small>Live quiz</small>
-          <h2 id="quiz-title">Một checkpoint ngắn đang chờ bạn</h2>
-          <p>Quiz sẽ xuất hiện tại đây ngay khi giảng viên mở hoạt động.</p>
+          <small>Quiz tự luyện</small>
+          <h2 id="quiz-title">Chọn một quiz và bắt đầu khi bạn sẵn sàng</h2>
+          <p>Quiz do giảng viên upload luôn có sẵn, không cần chờ admin kích hoạt.</p>
         </div>
-        {!isGuest && user?.role === "ADMIN" && (
-          <button className="text-button" type="button" onClick={onRequestAdmin}>
-            Mở điều khiển admin
+        <div className="quiz-launch-actions">
+          <select
+            value={selectedQuizId}
+            onChange={(event) => setSelectedQuizId(event.target.value)}
+            disabled={catalogLoading || availableQuizzes.length === 0}
+            aria-label="Chọn quiz"
+          >
+            {catalogLoading && <option>Đang tải danh sách...</option>}
+            {!catalogLoading && availableQuizzes.length === 0 && <option>Chưa có quiz</option>}
+            {availableQuizzes.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.title} · {item.day}
+              </option>
+            ))}
+          </select>
+          <button
+            className="primary-button"
+            type="button"
+            disabled={!selectedQuizId || catalogLoading}
+            onClick={() => setIsOpen(true)}
+          >
+            Bắt đầu làm
             <ArrowRight />
           </button>
-        )}
+          {loadError && <small className="quiz-load-error">{loadError}</small>}
+        </div>
       </section>
     );
   }
 
   if (loading) {
     return (
-      <section className="quiz-panel quiz-locked">
+      <section className="quiz-panel quiz-active is-fullscreen">
+        <div className="quiz-session-bar">
+          <div><small>Đang mở quiz</small></div>
+          <button className="icon-button" type="button" onClick={() => setIsOpen(false)} aria-label="Đóng quiz">
+            <X />
+          </button>
+        </div>
         <div className="quiz-lock-icon">
           <div className="loader-spinner" />
         </div>
@@ -668,6 +736,9 @@ function QuizPanel({
         >
           Xem lại
         </button>
+        <button className="text-button" type="button" onClick={() => setIsOpen(false)}>
+          Đóng quiz
+        </button>
       </section>
     );
   }
@@ -679,6 +750,9 @@ function QuizPanel({
           <small>Không có câu hỏi</small>
           <p>Quiz đang được chuẩn bị.</p>
         </div>
+        <button className="text-button" type="button" onClick={() => setIsOpen(false)}>
+          Đóng quiz
+        </button>
       </section>
     );
   }
@@ -713,7 +787,7 @@ function QuizPanel({
           score: 0,
           correctAnswers: 0,
           wrongAnswers: questions.length,
-          timeSpent: Math.round((Date.now() - startTime) / 1000),
+          timeSpent: Math.round((Date.now() - startTimeRef.current) / 1000),
           quiz: { id: quiz?.id || "", title: quiz?.title || "", day: activeDay },
         });
         return;
@@ -723,7 +797,7 @@ function QuizPanel({
         const submitAnswers = Array.from(answers.entries()).map(
           ([questionId, selectedAnswer]) => ({ questionId, selectedAnswer }),
         );
-        const timeSpent = Math.round((Date.now() - startTime) / 1000);
+        const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
         const res = await quizApi.submitQuiz(quiz!.id, submitAnswers, timeSpent);
         setResult(res);
         setComplete(true);
@@ -745,10 +819,23 @@ function QuizPanel({
   };
 
   return (
-    <section className="quiz-panel quiz-active" aria-labelledby="active-quiz-title">
+    <section className="quiz-panel quiz-active is-fullscreen" aria-labelledby="active-quiz-title">
+      <div className="quiz-session-bar">
+        <div>
+          <small>Quiz tự luyện</small>
+          <strong>{quiz?.title}</strong>
+        </div>
+        <div className="quiz-session-actions">
+          <span>Nhấn Esc để thoát</span>
+          <button className="icon-button" type="button" onClick={() => setIsOpen(false)} aria-label="Đóng quiz">
+            <X />
+          </button>
+        </div>
+      </div>
+      <progress className="quiz-progress" value={questionIndex + 1} max={questions.length} />
       <div className="quiz-heading">
         <div>
-          <span className="quiz-status">Live quiz</span>
+          <span className="quiz-status">{quiz?.day} · {quiz?.difficulty}</span>
           <h2 id="active-quiz-title">{question.question}</h2>
         </div>
         <span className="question-count">
@@ -798,22 +885,57 @@ function QuizPanel({
 /*  Tutor Panel                                                        */
 /* ------------------------------------------------------------------ */
 
-function TutorPanel({ slideIndex, dayTitle }: { slideIndex: number; dayTitle: string }) {
+function TutorPanel({
+  slideIndex,
+  dayKey,
+  dayTitle,
+  onOpenSlide,
+}: {
+  slideIndex: number;
+  dayKey: string;
+  dayTitle: string;
+  onOpenSlide: (page: number) => void;
+}) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 1,
       role: "assistant",
-      text: "Chào bạn, mình là Lumi. Mình đang theo dõi bài giảng cùng bạn và sẵn sàng giải thích bất kỳ ý nào.",
-    },
-    {
-      id: 2,
-      role: "assistant",
-      text: "Hãy đặt câu hỏi bất kỳ về nội dung bài học hoặc dùng gợi ý bên dưới nhé!",
+      text: "Mình trả lời dựa trên nội dung slide và luôn đính kèm nguồn để bạn kiểm tra lại.",
     },
   ]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
+  const [agentStatus, setAgentStatus] = useState<"checking" | "online" | "offline">(
+    "checking",
+  );
+  const [agentProvider, setAgentProvider] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
+
+  const quickPrompts = useMemo(
+    () => [
+      `Tóm tắt slide ${slideIndex + 1}`,
+      "Giải thích thuật ngữ chính",
+      "Cho một ví dụ thực tế",
+    ],
+    [slideIndex],
+  );
+
+  useEffect(() => {
+    let active = true;
+    agentApi
+      .getAgentHealth()
+      .then((health) => {
+        if (!active) return;
+        setAgentStatus(health.status === "ok" ? "online" : "offline");
+        setAgentProvider(health.provider);
+      })
+      .catch(() => {
+        if (active) setAgentStatus("offline");
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -829,30 +951,58 @@ function TutorPanel({ slideIndex, dayTitle }: { slideIndex: number; dayTitle: st
       setThinking(true);
 
       try {
-        const reply = await agentApi.askTutor(trimmed);
-        setMessages((current) => [
-          ...current,
-          { id: Date.now() + 1, role: "assistant", text: reply },
-        ]);
-      } catch {
+        const reply = await agentApi.askTutor(trimmed, {
+          currentDay: dayKey,
+          currentSlide: slideIndex + 1,
+        });
+        setAgentStatus("online");
+        setAgentProvider(reply.provider);
         setMessages((current) => [
           ...current,
           {
             id: Date.now() + 1,
             role: "assistant",
-            text: "Xin lỗi, mình đang gặp sự cố. Vui lòng thử lại sau.",
+            text: reply.answer,
+            status: "answer",
+            provider: reply.provider,
+            level: reply.level,
+            sources: reply.sources,
+          },
+        ]);
+      } catch {
+        setAgentStatus("offline");
+        setMessages((current) => [
+          ...current,
+          {
+            id: Date.now() + 1,
+            role: "assistant",
+            text: "Agent chưa thể truy cập kho slide lúc này. Bạn có thể thử lại sau khi dịch vụ được kết nối.",
+            status: "error",
+            retryQuestion: trimmed,
           },
         ]);
       } finally {
         setThinking(false);
       }
     },
-    [thinking],
+    [dayKey, slideIndex, thinking],
   );
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     sendMessage(input);
+  };
+
+  const providerLabel =
+    agentProvider === "openai"
+      ? "OpenAI agent"
+      : agentProvider === "mock"
+        ? "Demo agent"
+        : "AI agent";
+  const levelLabels: Record<AgentResponseLevel, string> = {
+    beginner: "Cơ bản",
+    intermediate: "Trung cấp",
+    advanced: "Nâng cao",
   };
 
   return (
@@ -864,26 +1014,40 @@ function TutorPanel({ slideIndex, dayTitle }: { slideIndex: number; dayTitle: st
           </span>
           <div>
             <h2 id="tutor-title">Lumi tutor</h2>
-            <p>
-              Đang theo dõi slide {slideIndex + 1} — {dayTitle}
-            </p>
+            <p>Hỏi đáp có dẫn nguồn từ bài học</p>
           </div>
         </div>
-        <span className="ai-badge">
-          <Brain weight="fill" />
-          AI
-        </span>
+        <div className="tutor-header-actions">
+          {messages.length > 1 && (
+            <button
+              className="tutor-reset"
+              type="button"
+              onClick={() => setMessages((current) => current.slice(0, 1))}
+            >
+              Cuộc trò chuyện mới
+            </button>
+          )}
+          <span className={`agent-status is-${agentStatus}`}>
+            <span aria-hidden="true" />
+            {agentStatus === "checking"
+              ? "Đang kết nối"
+              : agentStatus === "online"
+                ? providerLabel
+                : "Mất kết nối"}
+          </span>
+        </div>
       </header>
 
       <div className="chat-context">
         <BookOpenText weight="fill" />
         <span>
-          <small>Ngữ cảnh hiện tại</small>
-          <strong>{dayTitle}</strong>
+          <small>Đang dùng làm ngữ cảnh</small>
+          <strong>Slide {slideIndex + 1} · {dayTitle}</strong>
         </span>
+        <span className="context-live">Tự cập nhật</span>
       </div>
 
-      <div className="messages" aria-live="polite">
+      <div className="messages" aria-live="polite" aria-busy={thinking}>
         {messages.map((message) => (
           <div className={`message-row ${message.role}`} key={message.id}>
             {message.role === "assistant" && (
@@ -891,7 +1055,47 @@ function TutorPanel({ slideIndex, dayTitle }: { slideIndex: number; dayTitle: st
                 <Sparkle weight="fill" />
               </span>
             )}
-            <div className="message-bubble">{message.text}</div>
+            <div className={`message-bubble ${message.status === "error" ? "is-error" : ""}`}>
+              <div className="message-content">{message.text}</div>
+              {message.provider && message.level && (
+                <div className="message-meta">
+                  <span>{message.provider === "openai" ? "OpenAI" : message.provider}</span>
+                  <span>{levelLabels[message.level]}</span>
+                </div>
+              )}
+              {message.sources && message.sources.length > 0 && (
+                <details className="message-sources">
+                  <summary>
+                    <BookOpenText weight="fill" />
+                    {message.sources.length} nguồn trong bài
+                  </summary>
+                  <div className="citation-list">
+                    {message.sources.map((source) => (
+                      <button
+                        className="citation-card"
+                        type="button"
+                        key={`${source.document_id}-${source.version}-${source.slide_number}`}
+                        onClick={() => onOpenSlide(source.slide_number)}
+                      >
+                        <span>Slide {source.slide_number}</span>
+                        <strong>{source.title}</strong>
+                        <small>{Math.round(Math.max(0, source.score) * 100)}% liên quan</small>
+                      </button>
+                    ))}
+                  </div>
+                </details>
+              )}
+              {message.status === "error" && message.retryQuestion && (
+                <button
+                  className="message-retry"
+                  type="button"
+                  onClick={() => sendMessage(message.retryQuestion || "")}
+                  disabled={thinking}
+                >
+                  Thử kết nối lại
+                </button>
+              )}
+            </div>
           </div>
         ))}
         {thinking && (
@@ -903,6 +1107,7 @@ function TutorPanel({ slideIndex, dayTitle }: { slideIndex: number; dayTitle: st
               <span />
               <span />
               <span />
+              <small>Đang tìm trong slide...</small>
             </div>
           </div>
         )}
@@ -939,7 +1144,11 @@ function TutorPanel({ slideIndex, dayTitle }: { slideIndex: number; dayTitle: st
             <PaperPlaneTilt weight="fill" />
           </button>
         </div>
-        <p>Lumi có thể mắc lỗi. Hãy đối chiếu với nội dung giảng viên.</p>
+        <p>
+          {agentStatus === "online"
+            ? "Câu trả lời được tạo từ nguồn hiển thị bên trên."
+            : "Agent đang ngoại tuyến — hệ thống không tạo câu trả lời giả."}
+        </p>
       </form>
     </aside>
   );
