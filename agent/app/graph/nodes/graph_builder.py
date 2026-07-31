@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 from app.knowledge import neo4j_client
-from app.knowledge.chunker import split_slide
+from app.knowledge.chunker import split_slides
 from app.knowledge.loader import Slide, load_directory
 from app.knowledge.vector_store import upsert_chunks
 from app.llm import get_chat_model
@@ -48,20 +48,32 @@ def store_concepts(concepts: list[ConceptNode], day: str) -> None:
 
 
 def build_from_slide(slide: Slide) -> dict:
-    chunks = split_slide(slide)
+    return build_from_slides([slide])
+
+
+def build_from_slides(slides: list[Slide]) -> dict:
+    if not slides:
+        raise ValueError("build_from_slides requires at least one slide")
+    chunks = split_slides(slides)
     chunk_count = upsert_chunks(chunks)
 
-    concepts = extract_concepts(slide.text)
-    store_concepts(concepts, slide.day)
+    concept_count = 0
+    for slide in slides:
+        concepts = extract_concepts(slide.text)
+        store_concepts(concepts, slide.day)
+        concept_count += len(concepts)
 
     return {
-        "source": slide.source,
-        "day": slide.day,
+        "source": slides[0].source,
+        "day": slides[0].day,
         "chunks_indexed": chunk_count,
-        "concepts_extracted": len(concepts),
+        "concepts_extracted": concept_count,
     }
 
 
 def build_all(data_dir) -> list[dict]:
     slides = load_directory(data_dir)
-    return [build_from_slide(slide) for slide in slides]
+    documents: dict[tuple[str, str], list[Slide]] = {}
+    for slide in slides:
+        documents.setdefault((slide.document_id, slide.version), []).append(slide)
+    return [build_from_slides(document) for document in documents.values()]

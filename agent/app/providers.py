@@ -1,8 +1,9 @@
 import hashlib
+import json
 import re
 from typing import Protocol
 
-from .domain import RetrievedSlide
+from .domain import SlideInput
 from .settings import RagSettings
 
 
@@ -10,25 +11,20 @@ class EmbeddingProvider(Protocol):
     def embed(self, text: str) -> list[float]: ...
 
 
-class MockEmbeddingProvider:
-    _DIMENSIONS = 256
+class ConceptExtractor(Protocol):
+    def extract(self, slide: SlideInput) -> list[str]: ...
 
+
+class MockEmbeddingProvider:
     def embed(self, text: str) -> list[float]:
-        vector = [0.0] * self._DIMENSIONS
-        tokens = re.findall(r"\w+", text.casefold()) or ["__empty__"]
-        for token in tokens:
-            digest = hashlib.sha256(token.encode("utf-8")).digest()
-            index = int.from_bytes(digest[:4], "big") % self._DIMENSIONS
-            vector[index] += 1.0
-        return vector
+        digest = hashlib.sha256(text.encode("utf-8")).digest()
+        return [byte / 255 for byte in digest]
 
 
 class OpenAIEmbeddingProvider:
     def __init__(self, settings: RagSettings):
-        if not settings.openai_api_key:
-            raise RuntimeError("OPENAI_API_KEY is required when RAG_PROVIDER=openai")
-        self._api_key = settings.openai_api_key
-        self._model = settings.openai_embedding_model
+        self._api_key = settings.openai_api_key.get_secret_value()
+        self._model = settings.embedding_model
         self._client = None
 
     def embed(self, text: str) -> list[float]:
@@ -39,66 +35,57 @@ class OpenAIEmbeddingProvider:
         response = self._client.embeddings.create(model=self._model, input=text)
         return list(response.data[0].embedding)
 
-
-class ChatProvider(Protocol):
-    @property
-    def name(self) -> str: ...
-
-    def answer(self, question: str, sources: list[RetrievedSlide]) -> str: ...
+    def close(self) -> None:
+        client, self._client = self._client, None
+        if client is not None and callable(getattr(client, "close", None)):
+            client.close()
 
 
-class MockChatProvider:
-    @property
-    def name(self) -> str:
-        return "mock"
+class DeterministicConceptExtractor:
+    """Small offline extractor for tests and local development."""
 
-    def answer(self, question: str, sources: list[RetrievedSlide]) -> str:
-        if not sources:
-            return "No relevant slide was found."
-        top = sources[0].chunk
-        return f"Slide {top.slide_number} — {top.title}: {top.content}"
+    def extract(self, slide: SlideInput) -> list[str]:
+        candidates = re.findall(r"[\w-]{3,}", f"{slide.title} {slide.content}", re.UNICODE)
+        unique: list[str] = []
+        seen: set[str] = set()
+        for candidate in candidates:
+            key = candidate.casefold()
+            if key not in seen:
+                seen.add(key)
+                unique.append(candidate)
+            if len(unique) == 8:
+                break
+        return unique
 
 
-class OpenAIChatProvider:
+class OpenAIConceptExtractor:
     def __init__(self, settings: RagSettings):
-        if settings.provider != "openai" or not settings.openai_api_key:
-            raise RuntimeError(
-                "RAG_PROVIDER=openai and OPENAI_API_KEY are required for OpenAI chat"
-            )
-        self._api_key = settings.openai_api_key
-        self._model = settings.openai_chat_model
+        self._api_key = settings.openai_api_key.get_secret_value()
+        self._model = settings.chat_model
         self._client = None
 
-    @property
-    def name(self) -> str:
-        return "openai"
-
-    def answer(self, question: str, sources: list[RetrievedSlide]) -> str:
+    def extract(self, slide: SlideInput) -> list[str]:
         if self._client is None:
             from openai import OpenAI
 
             self._client = OpenAI(api_key=self._api_key)
-        context = "\n\n".join(
-            (
-                f"Slide {source.chunk.slide_number} — {source.chunk.title}\n"
-                f"{source.chunk.content}"
-            )
-            for source in sources
-        )
         response = self._client.responses.create(
             model=self._model,
-            input=[
-                {
-                    "role": "system",
-                    "content": (
-                        "Answer the question using only the supplied slide context. "
-                        "Cite slide numbers in the answer."
-                    ),
-                },
-                {
-                    "role": "user",
-                    "content": f"Question:\n{question}\n\nSlide context:\n{context}",
-                },
-            ],
+            input=(
+                "Extract at most 12 concepts explicitly present in this slide. "
+                "Return JSON only as {\"concepts\": [\"...\"]}.\n\n"
+                f"Title: {slide.title}\nContent: {slide.content}"
+            ),
         )
-        return response.output_text
+        value = json.loads(response.output_text)
+        concepts = value.get("concepts")
+        if not isinstance(concepts, list) or not all(
+            isinstance(concept, str) for concept in concepts
+        ):
+            raise ValueError("OpenAI concept extraction returned invalid JSON")
+        return concepts
+
+    def close(self) -> None:
+        client, self._client = self._client, None
+        if client is not None and callable(getattr(client, "close", None)):
+            client.close()

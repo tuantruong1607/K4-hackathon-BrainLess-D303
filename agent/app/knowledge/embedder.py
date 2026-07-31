@@ -1,23 +1,21 @@
-from functools import lru_cache
-
-from langchain_openai import OpenAIEmbeddings
-
-from app.config import settings
+from app.providers import MockEmbeddingProvider, OpenAIEmbeddingProvider
+from app.settings import Settings
 
 
-@lru_cache
-def get_embeddings() -> OpenAIEmbeddings:
-    return OpenAIEmbeddings(
-        model=settings.embedding_model,
-        api_key=settings.openai_api_key,
-    )
+def _provider(settings: Settings | None = None):
+    selected = settings or Settings()
+    selected.validate_runtime()
+    if selected.rag_provider == "mock":
+        return MockEmbeddingProvider()
+    return OpenAIEmbeddingProvider(selected)
 
 
-def embed_texts(texts: list[str]) -> list[list[float]]:
-    if not texts:
-        return []
-    return get_embeddings().embed_documents(texts)
+def embed_texts(
+    texts: list[str], *, settings: Settings | None = None
+) -> list[list[float]]:
+    provider = _provider(settings)
+    return [provider.embed(text) for text in texts]
 
 
-def embed_text(text: str) -> list[float]:
-    return get_embeddings().embed_query(text)
+def embed_text(text: str, *, settings: Settings | None = None) -> list[float]:
+    return _provider(settings).embed(text)

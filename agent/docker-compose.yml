@@ -1,29 +1,30 @@
 services:
   qdrant:
-    image: qdrant/qdrant:v1.18.3
+    image: qdrant/qdrant:v1.15.4
     ports:
       - "127.0.0.1:6333:6333"
+      - "127.0.0.1:6334:6334"
     volumes:
       - qdrant_data:/qdrant/storage
+
   neo4j:
-    image: neo4j:5-community
+    image: neo4j:5.26.28-community
     environment:
-      NEO4J_AUTH: neo4j/agentgraph123
-      NEO4J_PLUGINS: '[]'
+      NEO4J_AUTH: "${NEO4J_USERNAME:?set NEO4J_USERNAME in .env}/${NEO4J_PASSWORD:?set NEO4J_PASSWORD in .env}"
     ports:
-      - "7474:7474"
-      - "7687:7687"
+      - "127.0.0.1:7474:7474"
+      - "127.0.0.1:7687:7687"
     volumes:
       - neo4j_data:/data
 
   postgres:
-    image: postgres:16
+    image: postgres:16.14-alpine3.23
     environment:
-      POSTGRES_USER: agent
-      POSTGRES_PASSWORD: agentgraph123
-      POSTGRES_DB: vlearn
+      POSTGRES_DB: "${POSTGRES_DB:?set POSTGRES_DB in .env}"
+      POSTGRES_USER: "${POSTGRES_USER:?set POSTGRES_USER in .env}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}"
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -31,4 +32,3 @@ volumes:
   qdrant_data:
   neo4j_data:
   postgres_data:
-
