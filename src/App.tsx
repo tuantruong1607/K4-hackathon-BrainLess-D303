@@ -18,7 +18,15 @@ import {
   Sparkle,
   X,
 } from "@phosphor-icons/react";
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { useAuth } from "./contexts/AuthContext";
 import { apiFetch } from "./api/apiClient";
@@ -69,6 +77,37 @@ function App() {
   const [quizEnabled, setQuizEnabled] = useState(false);
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
   const slideRef = useRef<HTMLDivElement>(null);
+  const pdfViewerRef = useRef<HTMLDivElement>(null);
+  const [pdfPageWidth, setPdfPageWidth] = useState(700);
+
+  useLayoutEffect(() => {
+    const viewer = pdfViewerRef.current;
+    if (!viewer) return;
+
+    let animationFrame = 0;
+    const measurePage = () => {
+      window.cancelAnimationFrame(animationFrame);
+      animationFrame = window.requestAnimationFrame(() => {
+        const nextWidth = Math.max(280, Math.floor(viewer.clientWidth - 24));
+        setPdfPageWidth((currentWidth) =>
+          currentWidth === nextWidth ? currentWidth : nextWidth,
+        );
+      });
+    };
+
+    const resizeObserver = new ResizeObserver(measurePage);
+    resizeObserver.observe(viewer);
+    window.addEventListener("resize", measurePage);
+    document.addEventListener("fullscreenchange", measurePage);
+    measurePage();
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", measurePage);
+      document.removeEventListener("fullscreenchange", measurePage);
+    };
+  }, [slideDocs.length]);
 
   // Fetch dynamic slides from backend API
   useEffect(() => {
@@ -345,7 +384,7 @@ function App() {
               </div>
 
               <div className="slide-stage" ref={slideRef}>
-                <div className="pdf-viewer">
+                <div className="pdf-viewer" ref={pdfViewerRef}>
                   <Document
                     file={slideDocs[activeDay]?.pdfUrl || ""}
                     onLoadSuccess={({ numPages: n }) => {
@@ -366,11 +405,7 @@ function App() {
                   >
                     <Page
                       pageNumber={slideIndex + 1}
-                      width={
-                        slideRef.current
-                          ? slideRef.current.clientWidth - 24
-                          : 700
-                      }
+                      width={pdfPageWidth}
                       renderAnnotationLayer={false}
                       renderTextLayer={false}
                     />

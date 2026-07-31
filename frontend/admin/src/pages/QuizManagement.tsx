@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import {
   BookOpen,
   Plus,
-  Play,
   Square,
   Trash2,
   Clock,
@@ -25,7 +24,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────
@@ -484,13 +482,13 @@ export default function QuizManagement() {
 
   const toggleLive = (id: string) => {
     setQuizzes((prev) =>
-      prev.map((q) => {
+      prev.map<Quiz>((q) => {
         if (q.id !== id) return q;
         if (q.status === "live") return { ...q, status: "closed" };
         // When going live, close any other live quiz
         return { ...q, status: "live" };
       })
-        .map((q) => {
+        .map<Quiz>((q) => {
           // Only one live at a time
           if (q.id !== id && q.status === "live") return { ...q, status: "closed" };
           return q;
